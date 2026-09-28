@@ -26,14 +26,12 @@ if [ ! -L "/app/storage" ]; then
     echo "✅ Linked /app/storage → /.data/storage"
 fi
 
-echo "🚀 Starting WebPDF Elite Production Server..."
+echo "🚀 Starting WebPDF Elite Production Server on port ${PORT:-8000}..."
 
 # تشغيل خادم Gunicorn مع عمال Uvicorn لضمان أقصى أداء وثبات
 exec gunicorn main:app \
     --workers 4 \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:${PORT:-8000} \
-    --timeout 600 \
-    --access-logfile - \
-    --error-logfile -
+    --timeout 600
 
