@@ -1471,6 +1471,23 @@
                     </button>
                 </div>
 
+                <!-- GitHub Auto Sync -->
+                <div class="card p-5 bg-card border border-border rounded-xl shadow-lg hover:shadow-cyan-500/20 transition-all">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <h2 style="font-size: 18px; font-weight: 700; color: #fff; margin: 0;">🚀 الرفع التلقائي إلى GitHub</h2>
+                        <span style="background: rgba(56, 189, 248, 0.15); color: var(--admin-primary); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800;">1-CLICK</span>
+                    </div>
+                    <p class="text-muted mb-3" style="font-size: 13px;">يقوم بمسح كافة سكريبتات الاختبار والملفات المؤقتة ثم رفع المشروع بالكامل تلقائياً إلى مستودع GitHub بضغطة زر واحدة.</p>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button id="btn-github-sync" class="btn btn-primary w-full flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); font-weight: 700;" onclick="handleSyncGitHub()">
+                            <i id="github-sync-icon">⚡</i> <span id="github-sync-text">تنظيف ورفع المشروع الآن</span>
+                        </button>
+                        <a href="https://github.com/oooppp637849-creator/Z-PACT" target="_blank" class="btn" style="background: rgba(255,255,255,0.06); border: 1px solid var(--admin-border); color: #fff; padding: 8px 14px; text-decoration: none; border-radius: 8px;" title="فتح المستودع">
+                            🔗
+                        </a>
+                    </div>
+                </div>
+
                 
                 <!-- Restore DB -->
                 <div class="card p-5 bg-card border border-border rounded-xl shadow-lg hover:shadow-cyan-500/20 transition-all">
@@ -3938,6 +3955,44 @@
                 loadMaterials();
             } catch (err) {
                 showToast(err.message, "error");
+            }
+        };
+
+        // ── 1-Click GitHub Auto-Sync Handler ──
+        window.handleSyncGitHub = async () => {
+            const btn = document.getElementById("btn-github-sync");
+            const icon = document.getElementById("github-sync-icon");
+            const text = document.getElementById("github-sync-text");
+            
+            if (!confirm("هل تريد تنظيف الملفات المؤقتة وسكريبتات الاختبار ورفع المشروع بالكامل إلى GitHub الآن؟")) {
+                return;
+            }
+
+            try {
+                if (btn) btn.disabled = true;
+                if (icon) icon.textContent = "⏳";
+                if (text) text.textContent = "جاري التنظيف والرفع...";
+                showToast("جاري تنظيف الملفات ورفع المشروع إلى GitHub...", "info");
+
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/admin-tools/sync-github`, {
+                    method: "POST",
+                    headers: { 
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                });
+                const data = await res.json();
+                if (!res.ok || data.status === "error") {
+                    throw new Error(data.message || data.detail || data.details || "فشل الرفع إلى GitHub");
+                }
+                showToast("✅ تم تنظيف السكريبتات ورفع المشروع بنجاح إلى GitHub!", "success");
+            } catch (err) {
+                showToast(`❌ ${err.message}`, "error");
+            } finally {
+                if (btn) btn.disabled = false;
+                if (icon) icon.textContent = "⚡";
+                if (text) text.textContent = "تنظيف ورفع المشروع الآن";
             }
         };
     </script>

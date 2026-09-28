@@ -272,3 +272,23 @@ def smart_merge_database(file: UploadFile = File(...), current_user: User = Depe
             os.remove(tmp_path)
             
     return {"message": "تم الدمج بنجاح", "summary": summary}
+
+
+@router.post("/sync-github", summary="مزامنة ورفع المشروع تلقائياً إلى GitHub")
+def sync_github(current_user: User = Depends(get_current_user)):
+    """تنظيف ملفات الاختبار ورفع المشروع بضغطة واحدة إلى GitHub"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="ليس لديك صلاحية للقيام بهذا الإجراء")
+
+    import subprocess
+    import sys
+    script_path = os.path.join(settings.BASE_DIR, "push_to_github.py")
+    if not os.path.exists(script_path):
+        raise HTTPException(status_code=404, detail="لم يتم العثور على سكريبت الرفع push_to_github.py")
+
+    res = subprocess.run([sys.executable, script_path], capture_output=True, text=True)
+    if res.returncode == 0:
+        return {"status": "success", "message": "تم تنظيف الملفات ورفع المشروع بنجاح إلى GitHub!", "repo": "https://github.com/oooppp637849-creator/Z-PACT"}
+    else:
+        return {"status": "error", "message": "حدث خطأ أثناء الرفع", "details": res.stderr[-300:] or res.stdout[-300:]}
+
