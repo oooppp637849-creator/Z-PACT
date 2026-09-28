@@ -34,6 +34,6 @@ exec gunicorn main:app \
     --worker-class uvicorn.workers.UvicornWorker \
     --bind 0.0.0.0:${PORT:-8000} \
     --timeout 600 \
-    --access-log-file - \
-    --error-log-file -
+    --access-logfile - \
+    --error-logfile -
 
