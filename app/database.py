@@ -214,8 +214,11 @@ def create_tables():
     # 1. الترقيع للأعمدة الجديدة في الجداول القديمة
     patch_database_schema()
     
-    # 2. إنشاء الجداول الجديدة (مثل user_devices)
-    Base.metadata.create_all(bind=engine)
+    # 2. إنشاء الجداول الجديدة (مثل user_devices) مع حماية ضد تداخل الـ Workers المتزامنة
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        logger.warning(f"ملاحظة أثناء إنشاء الجداول (قد يكون worker آخر قام بإنشائها): {e}")
 
     # 3. دمج البيانات الخارجية لو وجدت (Smart Merge)
     sync_external_database()
