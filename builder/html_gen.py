@@ -345,7 +345,7 @@ def generate_html_body():
       <!-- Creator Hero Presentation Card -->
       <div class="creator-hero-card reveal">
         <div class="creator-avatar-wrap">
-          <video class="creator-avatar-video" src="../assets/5816566040681452108.mp4" autoplay loop muted playsinline></video>
+          <video class="creator-avatar-video" src="/frontend/assets/5816566040681452108.mp4" autoplay loop muted playsinline></video>
         </div>
 
         <div class="creator-bio-content">
@@ -437,7 +437,7 @@ def generate_html_body():
 
       <!-- Final Action Buttons & Navigation CTAs -->
       <div class="climax-cta-row reveal">
-        <a href="../index.html" class="cta-btn primary">
+        <a href="/store" class="cta-btn primary">
           <span>🚀</span>
           <span>الدخول إلى منصة Z-PACT الرئيسية</span>
         </a>

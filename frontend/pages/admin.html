@@ -16,16 +16,16 @@
     <script src="/frontend/js/api.js?v=2.1.0"></script>
     <script src="/frontend/js/chat_notif.js?v=2.1.0"></script>
 
-    <!-- Libraries for Stamp Designer -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- Local Libraries (Zero Tracking Prevention blocks & 100% Offline) -->
+    <script src="/frontend/js/vendor/fabric.min.js"></script>
+    <script src="/frontend/js/vendor/pdf.min.js"></script>
     <script>
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        if (pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = '/frontend/js/vendor/pdf.worker.min.js';
+        }
     </script>
-    
-    <!-- Chart.js for Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/frontend/js/vendor/chart.min.js"></script>
 
     <!-- Global Styles -->
     <link rel="stylesheet" href="/frontend/css/global.css?v=2.1.0">
