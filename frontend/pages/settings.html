@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>الإعدادات والمحفظة — Z-PACT</title>
+  <link rel="icon" href="/frontend/assets/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/frontend/css/global.css?v=2.1.0">
+  <script src="/frontend/js/api.js?v=2.1.0"></script>
+  <script src="/frontend/js/chat_notif.js?v=2.1.0"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at top right, #1e293b, #0f172a);
+      background-attachment: fixed;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    /* ===== Animated Background Orbs ===== */
+    .bg-scene {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.12;
+      animation: orbFloat 12s ease-in-out infinite alternate;
+    }
+    .bg-orb-1 { width: 450px; height: 450px; background: var(--primary); top: -80px; right: -80px; }
+    .bg-orb-2 { width: 350px; height: 350px; background: var(--secondary); bottom: -60px; left: -60px; animation-delay: -4s; }
+    
+    @keyframes orbFloat {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    .settings-container {
+      position: relative;
+      z-index: 1;
+      max-width: 800px;
+      margin: 3.5rem auto;
+      padding: 2.5rem;
+      background: var(--bg-card);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-lg), 0 10px 30px rgba(0, 0, 0, 0.25);
+      animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar-section {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 2.5rem;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 1.25rem;
+      border-radius: var(--radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .avatar-wrapper {
+      position: relative;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      padding: 3px;
+      box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25);
+      transition: transform 0.3s;
+    }
+    
+    .avatar-wrapper:hover {
+      transform: scale(1.05);
+    }
+
+    .avatar-preview {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #1e293b;
+      object-fit: cover;
+      aspect-ratio: 1 / 1;
+      border: 2px solid #0f172a;
+      display: block;
+    }
+
+    /* ===== Recharge Box ===== */
+    .recharge-box {
+      background: linear-gradient(135deg, rgba(16,185,129,0.04), rgba(56,189,248,0.04));
+      border: 1px solid rgba(16,185,129,0.2);
+      padding: 2rem;
+      border-radius: var(--radius-md);
+      margin-top: 3rem;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.05);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .recharge-box:hover {
+      border-color: rgba(16,185,129,0.35);
+      box-shadow: 0 6px 30px rgba(16,185,129,0.08);
+    }
+    .recharge-title {
+      font-size: 19px; font-weight: 800; color: #10b981;
+      margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;
+    }
+
+    /* رقم المنصة — بطاقة بارزة */
+    .platform-number-card {
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 14px;
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .platform-number-label {
+      font-size: 12px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+    .platform-number-value {
+      font-size: 26px; font-weight: 900; color: #fff;
+      letter-spacing: 2px; direction: ltr; font-family: 'Outfit', monospace;
+    }
+    .copy-btn {
+      background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);
+      color: #10b981; padding: 8px 16px; border-radius: 10px;
+      cursor: pointer; font-weight: 700; font-size: 13px;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .copy-btn:hover { background: rgba(16,185,129,0.25); }
+
+    /* خطوات الشحن */
+    .steps-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-bottom: 1.5rem;
+    }
+    @media (max-width: 600px) { .steps-grid { grid-template-columns: 1fr; } }
+
+    .step-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px; padding: 1rem;
+    }
+    .step-card-header {
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 800; font-size: 14px; color: #fff; margin-bottom: 8px;
+    }
+    .step-card-header .method-badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 6px;
+      font-weight: 700; letter-spacing: 0.5px;
+    }
+    .badge-vodafone  { background: rgba(220,38,38,0.2);  color: #f87171; }
+    .badge-instapay { background: rgba(56,189,248,0.15); color: #38bdf8; }
+    .step-list { list-style: none; padding: 0; margin: 0; }
+    .step-list li {
+      font-size: 13px; color: var(--text-muted); padding: 4px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04); line-height: 1.5;
+    }
+    .step-list li:last-child { border-bottom: none; }
+    .step-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: rgba(16,185,129,0.2); color: #10b981;
+      font-size: 10px; font-weight: 800; margin-left: 6px; flex-shrink: 0;
+    }
+
+    .coupon-box {
+      background: rgba(245, 158, 11, 0.03);
+      border: 1px solid rgba(245, 158, 11, 0.15);
+      padding: 2rem;
+      border-radius: var(--radius-md);
+      margin-top: 2rem;
+      box-shadow: 0 4px 20px rgba(245, 158, 11, 0.03);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .coupon-box:hover {
+      border-color: rgba(245, 158, 11, 0.3);
+      box-shadow: 0 4px 25px rgba(245, 158, 11, 0.06);
+    }
+    .coupon-title {
+      font-size: 18px; font-weight: 800; color: #f59e0b;
+      margin-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ===== Referral Card ===== */
+    .referral-card {
+      background: linear-gradient(135deg, rgba(129,140,248,0.06), rgba(56,189,248,0.06));
+      border: 1px solid rgba(129,140,248,0.2);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .referral-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .referral-code-box {
+        background: rgba(0,0,0,0.3);
+        border: 2px dashed var(--primary);
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-family: 'Outfit', sans-serif;
+        font-size: 24px;
+        font-weight: 900;
+        color: var(--primary);
+        letter-spacing: 2px;
+        text-align: center;
+    }
+  
+/* Responsive Settings CSS */
+@media (max-width: 768px) {
+    .settings-container {
+        flex-direction: column;
+    }
+    .settings-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 15px;
+        margin-bottom: 15px;
+        display: flex;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    .settings-sidebar a {
+        display: inline-block;
+        padding: 10px 15px;
+        margin-bottom: 0;
+    }
+    .settings-content {
+        padding: 10px;
+    }
+}
+
+    /* Hide chat widget completely on settings page */
+    #chat-widget,
+    .chat-widget,
+    #chat-toggle-btn,
+    .chat-btn,
+    #chat-window,
+    .chat-window {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+    }
+</style>
+
+</head>
+<body class="dark-theme">
+
+  <!-- Floating Background Orbs -->
+  <div class="bg-scene">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+  </div>
+
+  <nav class="navbar" style="position: relative; z-index: 10;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <img id="nav-logo-img" src="/frontend/assets/logo.png" style="height: 35px; width: 35px; object-fit: contain;">
+      <span class="nav-logo" id="nav-logo-text" style="margin: 0; font-size: 26px;">Z-PACT</span>
+    </div>
+    <div class="nav-links">
+      <a href="store.html">🏪 المتجر</a>
+      <a href="store.html?tab=purchases">📦 مشترياتي</a>
+      <a href="settings.html" class="active">⚙️ الإعدادات</a>
+      <a href="creator.html" style="color: #38bdf8; font-weight: 700; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 20px; padding: 5px 14px; text-decoration: none; transition: 0.2s;" onmouseover="this.style.background='rgba(56,189,248,0.2)'" onmouseout="this.style.background='rgba(56,189,248,0.1)'">✨ عن الصانع</a>
+      <a href="admin.html" id="admin-dash-btn" style="display: none; color: #ef4444; font-weight: 800;">⚙️ لوحة التحكم</a>
+    </div>
+    <div class="nav-actions">
+      <div class="notif-bell" onclick="toggleNotifDropdown()">
+        🔔<div id="notif-badge" class="notif-badge" style="display:none">0</div>
+      </div>
+      <div id="notif-dropdown" class="notif-dropdown">
+        <div class="notif-header">
+          <span>الإشعارات</span>
+          <span style="font-size:12px;color:var(--primary);cursor:pointer" onclick="toggleNotifDropdown()">إغلاق</span>
+        </div>
+        <div id="notif-list" class="notif-list"></div>
+      </div>
+      <div class="user-pill">
+        <span class="coins-badge"><img src="/frontend/assets/zpact_coin.png" class="coin-icon" alt="Z"> <span id="user-coins-val">0</span></span>
+        <span style="opacity:0.7">|</span>
+        <span>أهلاً، <strong id="user-name">—</strong></span>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="window.authAPI.logout()">خروج</button>
+    </div>
+  </nav>
+
+  <div class="settings-container">
+    
+    <div class="section-title" id="profile-section-title">👤 الملف الشخصي والمحفظة</div>
+    
+    <!-- Wallet Card -->
+    <div id="top-wallet-card" style="background: linear-gradient(135deg, var(--bg-sidebar), #1e293b); border: 1px solid var(--primary-light); border-radius: var(--radius-lg); padding: 1.75rem; margin-bottom: 2.5rem; box-shadow: var(--shadow-md); position: relative; overflow: hidden;">
+      <div style="position: absolute; top: -20px; left: -20px; width: 120px; height: 120px; background: var(--primary-glow); filter: blur(50px); opacity: 0.3;"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 2;">
+        <div>
+          <div style="font-size: 13px; color: var(--text-muted); font-weight: 700; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px;">رصيدك الحالي</div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="/frontend/assets/zpact_coin.png" style="width: 36px; height: 36px; object-fit: contain;">
+            <span id="wallet-coins" style="font-size: 38px; font-weight: 900; color: #fff; letter-spacing: -1px;">0</span>
+            <span style="font-size: 18px; font-weight: 700; color: #f59e0b; margin-top: 10px;">كوين</span>
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 5px; opacity: 0.7;">💡 1 كوين يعادل 1 جنيه مصري</div>
+        </div>
+        <div style="text-align: left;">
+          <button class="btn btn-primary" onclick="document.querySelector('.coupon-box').scrollIntoView({behavior:'smooth'})" style="padding: 8px 16px; font-size: 13px; border-radius: 12px;">⚡ شحن الرصيد</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Referral Section -->
+    <div class="referral-card">
+        <div class="referral-header">
+            <div>
+                <h3 style="font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 4px;">🎁 برنامج التسويق والجوائز</h3>
+                <p style="font-size: 13px; color: var(--text-muted);">اربح 10 كوينز عن كل صديق يشحن رصيده لأول مرة!</p>
+            </div>
+            <div class="referral-code-box" id="my-referral-code">----</div>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="referral-link" class="form-input" readonly style="flex: 1; font-size: 12px; background: rgba(0,0,0,0.2);">
+            <button class="btn btn-primary" onclick="copyReferralLink()" style="white-space: nowrap;">📋 نسخ الرابط</button>
+        </div>
+    </div>
+
+    <div class="avatar-section">
+      <div class="avatar-wrapper">
+        <img id="avatar-img" class="avatar-preview" src="" alt="Avatar">
+      </div>
+      <div style="flex: 1;">
+        <div id="user-display-name" style="font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 2px;">—</div>
+        <div id="user-display-email" style="font-size: 14px; color: var(--text-muted); margin-bottom: 15px;">—</div>
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px;">
+          📸 تغيير الصورة
+          <input type="file" id="avatar-input" style="display:none" accept="image/*" onchange="uploadAvatar()">
+        </label>
+      </div>
+    </div>
+
+    <form id="profile-form" onsubmit="updateProfile(event)" style="background: rgba(255,255,255,0.01); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.03);">
+      <div class="form-group">
+        <label class="form-label">الاسم بالكامل</label>
+        <input type="text" id="prof-name" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input type="email" id="prof-email" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">رقم الهاتف</label>
+        <input type="tel" id="prof-phone" class="form-input" placeholder="01XXXXXXXXX">
+      </div>
+      <div class="form-group" style="margin-bottom: 2rem;">
+        <label class="form-label">كلمة المرور الجديدة (اختياري)</label>
+        <input type="password" id="prof-password" class="form-input" placeholder="اتركها فارغة إذا لم ترد تغييرها">
+      </div>
+      <div id="prof-msg" style="margin-bottom:1.5rem;font-size:14px;font-weight:600;"></div>
+      <button type="submit" class="btn btn-primary btn-lg" id="prof-btn" style="width: 100%; border-radius: 12px; font-weight: 800; letter-spacing: 0.5px;">💾 حفظ التعديلات الشخصية</button>
+    </form>
+
+    <div class="avatar-section" id="teacher-logo-section">
+      <div class="avatar-wrapper" style="border-radius: 8px;">
+        <img id="logo-img" class="avatar-preview" src="/frontend/assets/logo.png" style="border-radius: 8px;" alt="Logo">
+      </div>
+      <div style="flex: 1;">
+        <div style="font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 2px;">لوجو المعلم / المنصة</div>
+        <div style="font-size: 14px; color: var(--text-muted); margin-bottom: 15px;">يستخدم كعلامة مائية في الملازم المباعة (Teacher Watermark)</div>
+        <label class="btn btn-secondary btn-sm" style="cursor:pointer; display: inline-flex; align-items: center; gap: 8px; border-radius: 10px;">
+          📸 رفع اللوجو
+          <input type="file" id="logo-input" style="display:none" accept="image/*" onchange="uploadLogo()">
+        </label>
+      </div>
+    </div>
+    
+    <script>
+      async function uploadLogo() {
+          const fileInput = document.getElementById('logo-input');
+          const file = fileInput.files[0];
+          if (!file) return;
+
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const btn = fileInput.parentElement;
+          const originalText = btn.innerHTML;
+          
+          try {
+              btn.innerHTML = '⏳ جاري الرفع...';
+              
+              const res = await window.usersAPI.uploadWatermarkLogo(formData);
+              
+              // Restore HTML first to prevent DOM missing elements errors
+              btn.innerHTML = originalText;
+              
+              const freshUser = await window.authAPI.me();
+              
+              if(freshUser.watermark_logo_path) {
+                  document.getElementById('logo-img').src = '/' + freshUser.watermark_logo_path + '?t=' + new Date().getTime();
+                  showToast(res.message || 'تم تحديث اللوجو بنجاح', 'success');
+                  localStorage.setItem("current_user", JSON.stringify(freshUser));
+              }
+          } catch(err) {
+              console.error(err);
+              showToast(err.message || 'فشل رفع اللوجو', 'error');
+              btn.innerHTML = originalText;
+          }
+      }
+      
+      // Load initial logo if exists
+      window.addEventListener('DOMContentLoaded', async () => {
+          try {
+             const freshUser = await window.authAPI.me();
+             if(freshUser && freshUser.watermark_logo_path) {
+                 document.getElementById('logo-img').src = '/' + freshUser.watermark_logo_path + '?t=' + new Date().getTime();
+             }
+          } catch(e){}
+      });
+    </script>
+    
+    <div class="section-title" style="margin-top: 3rem;">🎨 إعدادات الواجهة (Preferences)</div>
+    
+    <div style="background: rgba(255, 255, 255, 0.02); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 2rem;">
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:1.5rem;">يتم حفظ هذه الإعدادات تلقائياً في حسابك وتطبيقها على جميع أجهزتك.</p>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+        <div>
+          <strong style="display: block; margin-bottom: 4px;">الوضع الليلي (Dark Mode)</strong>
+          <span style="font-size: 12px; color: var(--text-muted);">تفعيل أو تعطيل الألوان الداكنة المريحة للعين</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="pref-theme" onchange="handlePrefChange('theme', this.checked ? 'dark' : 'light')">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+        <div>
+          <strong style="display: block; margin-bottom: 4px;">إظهار الشات العام</strong>
+          <span style="font-size: 12px; color: var(--text-muted);">عرض فقاعة الدردشة العامة في أسفل الشاشة</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="pref-chat" onchange="handlePrefChange('chat_visible', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong style="display: block; margin-bottom: 4px;">تفعيل الإشعارات</strong>
+          <span style="font-size: 12px; color: var(--text-muted);">تلقي إشعارات بالرسائل الجديدة والملفات</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="pref-notif" onchange="handlePrefChange('notifications', this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Creator Journey Card -->
+    <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(168, 85, 247, 0.12) 100%); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+      <div>
+        <h4 style="font-size: 16px; font-weight: 800; color: #fff; margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+          <span>🚀 قصة الصانع ومبتكر النظام</span>
+          <span style="font-size: 11px; background: rgba(0, 242, 255, 0.2); color: #00f2ff; padding: 2px 8px; border-radius: 10px; font-weight: 800;">Abdo Saber</span>
+        </h4>
+        <p style="font-size: 13px; color: var(--text-muted); margin: 0; line-height: 1.6;">اكتشف القصة التفاعلية الممتعة: من شغف الطفولة بالألعاب، إلى سطر Hello World، وعالم الروبوتات وهندسة بوتات تيليجرام.</p>
+      </div>
+      <a href="creator.html" class="btn btn-primary" style="text-decoration: none; padding: 10px 22px; font-weight: 800; white-space: nowrap; border-radius: 20px; box-shadow: 0 0 20px rgba(14, 165, 233, 0.4);">
+        ✨ رحلة الصانع ←
+      </a>
+    </div>
+
+    <div id="bottom-wallet-section">
+      <div class="recharge-box">
+        <div class="recharge-title">⚡ شحن رصيد المحفظة</div>
+        
+        <div class="platform-number-card">
+          <div>
+            <div class="platform-number-label">حول المبلغ إلى هذا الرقم</div>
+            <div class="platform-number-value" id="platform-number">01097671808</div>
+          </div>
+          <button class="copy-btn" onclick="copyNumber()">📋 نسخ الرقم</button>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-card-header">
+              <span class="method-badge badge-vodafone">Vodafone Cash</span>
+              <span>طريقة التحويل</span>
+            </div>
+            <ul class="step-list">
+              <li><span class="step-num">1</span> اطلب #7*9* من خط فودافون</li>
+              <li><span class="step-num">2</span> اختر تحويل أموال</li>
+              <li><span class="step-num">3</span> أدخل رقم المنصة والمبلغ</li>
+            </ul>
+          </div>
+          <div class="step-card">
+            <div class="step-card-header">
+              <span class="method-badge badge-instapay">InstaPay</span>
+              <span>طريقة التحويل</span>
+            </div>
+            <ul class="step-list">
+              <li><span class="step-num">1</span> اختر "إرسال نقود"</li>
+              <li><span class="step-num">2</span> اختر "رقم موبايل"</li>
+              <li><span class="step-num">3</span> أدخل رقم المنصة والمبلغ</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="background: rgba(255,255,255,0.02); padding: 1.25rem; border-radius: 12px; border: 1px dashed rgba(16,185,129,0.3);">
+          <label class="form-label" style="color: #10b981; font-size: 14px;">أدخل الرقم/الاسم الذي حوّلت منه لتأكيد الشحن</label>
+          <div style="display:flex; gap:12px; margin-top: 8px;">
+            <input type="text" id="recharge-phone" class="form-input" placeholder="مثلاً: 010... أو اسمك في انستا باي" style="border-color: rgba(16,185,129,0.2)">
+            <button class="btn btn-primary" id="recharge-btn" onclick="confirmRecharge()" style="background: #10b981; border-color: #10b981; white-space: nowrap;">✅ تأكيد</button>
+          </div>
+          <div id="recharge-msg" style="margin-top:10px; font-size:13px; font-weight:600;"></div>
+        </div>
+      </div>
+
+      <div class="coupon-box">
+        <div class="coupon-title">🎁 استرداد كوبون الولاء</div>
+        <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:1.25rem; line-height: 1.6;">إذا كان لديك كود كوبون هدية تم شحنه لك من قبل الإدارة، قم بإدخاله هنا وسيتم إضافة الكوينز مباشرة إلى رصيدك.</p>
+        <div style="display:flex;gap:12px">
+          <input type="text" id="coupon-code" class="form-input" placeholder="VIP-XXXX" style="letter-spacing: 1px; font-weight: 700; text-transform: uppercase;">
+          <button class="btn btn-primary btn-lg" onclick="redeemCoupon()" style="white-space: nowrap; padding: 0 1.75rem;">✨ استرداد</button>
+        </div>
+        <div id="coupon-msg" style="margin-top:12px;font-size:14px;font-weight:600;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Bottom Navigation (Mobile Only) ===== -->
+  <nav class="bottom-nav" id="mobile-bottom-nav">
+    <a href="store.html" class="bottom-nav-item">
+      <span class="icon">🏪</span>
+      <span>المتجر</span>
+    </a>
+    <a href="store.html?tab=purchases" class="bottom-nav-item">
+      <span class="icon">📦</span>
+      <span>مشترياتي</span>
+    </a>
+    <a href="settings.html" class="bottom-nav-item active">
+      <span class="icon">⚙️</span>
+      <span>الإعدادات</span>
+    </a>
+    <a href="admin.html" class="bottom-nav-item" id="admin-bottom-nav-item" style="display: none; color: #ef4444;">
+      <span class="icon">🛡️</span>
+      <span>لوحة التحكم</span>
+    </a>
+  </nav>
+
+  <script>
+    if (!window.requireAuth()) {
+        window.location.href = "login.html";
+    }
+
+    const user = window.getCurrentUser();
+    
+    if (window.isAdmin()) {
+        // إظهار روابط لوحة التحكم للأدمن فقط
+        const topAdminBtn = document.getElementById("admin-dash-btn");
+        if (topAdminBtn) topAdminBtn.style.display = "inline-flex";
+
+        const bottomAdminBtn = document.getElementById("admin-bottom-nav-item");
+        if (bottomAdminBtn) bottomAdminBtn.style.display = "flex";
+
+        // إخفاء كل ما يخص المحفظة والشحن للأدمن/المعلم
+        const topWallet = document.getElementById("top-wallet-card");
+        if (topWallet) topWallet.style.display = "none";
+        
+        const bottomWallet = document.getElementById("bottom-wallet-section");
+        if (bottomWallet) bottomWallet.style.display = "none";
+        
+        const coinsBadge = document.querySelector(".coins-badge");
+        if (coinsBadge) coinsBadge.style.display = "none";
+        
+        const title = document.getElementById("profile-section-title");
+        if (title) title.textContent = "👤 الملف الشخصي";
+    } else {
+        // إخفاء قسم رفع اللوجو المخصص للمدرس عن الطلاب
+        const logoSection = document.getElementById("teacher-logo-section");
+        if (logoSection) logoSection.style.display = "none";
+        
+        document.getElementById("user-coins-val").textContent = user?.coins || "0";
+        document.getElementById("wallet-coins").textContent = user?.coins || "0";
+    }
+    
+    if (document.getElementById("user-name")) {
+        document.getElementById("user-name").textContent = user?.full_name || "—";
+    }
+    
+    document.getElementById("user-display-name").textContent = user?.full_name || "—";
+    document.getElementById("user-display-email").textContent = user?.email || "—";
+    
+    // Load existing data
+    document.getElementById("prof-name").value = user?.full_name || "";
+    document.getElementById("prof-email").value = user?.email || "";
+    document.getElementById("prof-phone").value = user?.phone || "";
+    const defaultAvatarSvg = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="50" fill="%231e293b"/><path d="M50 30a12 12 0 100 24 12 12 0 000-24zM25 78c0-12 12-16 25-16s25 4 25 16" stroke="%2338bdf8" stroke-width="4" stroke-linecap="round"/></svg>`;
+    const avatarPath = user?.profile_picture_path;
+    document.getElementById("avatar-img").src = avatarPath
+        ? `/${avatarPath.replace(/^\/+/, '')}`
+        : defaultAvatarSvg;
+    
+    // Referral Data
+    const refCode = user?.referral_code || "N/A";
+    document.getElementById("my-referral-code").textContent = refCode;
+    const refLink = `${window.location.origin}/frontend/pages/login.html?ref=${refCode}`;
+    document.getElementById("referral-link").value = refLink;
+
+    function copyReferralLink() {
+        const link = document.getElementById("referral-link").value;
+        navigator.clipboard.writeText(link).then(() => {
+            alert("تم نسخ رابط الدعوة الخاص بك بنجاح!");
+        });
+    }
+
+    async function updateProfile(e) {
+        e.preventDefault();
+        const btn = document.getElementById("prof-btn");
+        const msg = document.getElementById("prof-msg");
+        btn.textContent = "جاري الحفظ...";
+        btn.disabled = true;
+
+        const data = {
+            full_name: document.getElementById("prof-name").value,
+            email: document.getElementById("prof-email").value,
+            phone: document.getElementById("prof-phone").value || null
+        };
+        const pass = document.getElementById("prof-password").value;
+        if (pass) data.password = pass;
+
+        try {
+            const updatedUser = await window.usersAPI.updateMe(data);
+            localStorage.setItem("current_user", JSON.stringify(updatedUser));
+            msg.textContent = "تم الحفظ بنجاح!";
+            msg.style.color = "#10b981";
+        } catch (err) {
+            msg.textContent = err.message;
+            msg.style.color = "#ef4444";
+        } finally {
+            btn.textContent = "حفظ التعديلات";
+            btn.disabled = false;
+        }
+    }
+
+    async function uploadAvatar() {
+        const fileInput = document.getElementById("avatar-input");
+        if (!fileInput.files[0]) return;
+        
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        
+        try {
+            await window.usersAPI.uploadAvatar(formData);
+            // Refresh me
+            const updatedUser = await window.authAPI.me();
+            localStorage.setItem("current_user", JSON.stringify(updatedUser));
+            const newPath = updatedUser.profile_picture_path;
+            document.getElementById("avatar-img").src = newPath
+                ? `/${newPath.replace(/^\/+/, '')}`
+                : defaultAvatarSvg;
+            alert("تم رفع الصورة بنجاح");
+        } catch (err) {
+            alert(err.message);
+        }
+    }
+
+    async function redeemCoupon() {
+        const code = document.getElementById("coupon-code").value.trim();
+        const msg = document.getElementById("coupon-msg");
+        if (!code) return;
+        
+        try {
+            const res = await window.coinsAPI.redeemCoupon(code);
+            msg.textContent = res.message;
+            msg.style.color = "#10b981";
+            // Refresh coins
+            const updatedUser = await window.authAPI.me();
+            localStorage.setItem("current_user", JSON.stringify(updatedUser));
+            document.getElementById("user-coins-val").textContent = updatedUser.coins;
+            document.getElementById("wallet-coins").textContent = updatedUser.coins;
+        } catch (err) {
+            msg.textContent = err.message;
+            msg.style.color = "#ef4444";
+        }
+    }
+
+    function copyNumber() {
+        const num = document.getElementById("platform-number").innerText;
+        navigator.clipboard.writeText(num).then(() => {
+            alert("تم نسخ الرقم: " + num);
+        });
+    }
+
+    async function confirmRecharge() {
+        const phone = document.getElementById("recharge-phone").value.trim();
+        const msg = document.getElementById("recharge-msg");
+        const btn = document.getElementById("recharge-btn");
+        
+        if (!phone) {
+            msg.textContent = "يرجى إدخال الرقم أو الاسم";
+            msg.style.color = "#ef4444";
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = "جاري التحقق...";
+        msg.textContent = "";
+
+        try {
+            const res = await window.coinsAPI.rechargeWallet(phone);
+            msg.textContent = res.message;
+            msg.style.color = "#10b981";
+            
+            // Refresh coins UI
+            const updatedUser = await window.authAPI.me();
+            localStorage.setItem("current_user", JSON.stringify(updatedUser));
+            document.getElementById("user-coins-val").textContent = updatedUser.coins;
+            document.getElementById("wallet-coins").textContent = updatedUser.coins;
+            
+            document.getElementById("recharge-phone").value = "";
+        } catch (err) {
+            msg.textContent = err.message;
+            msg.style.color = "#ef4444";
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "✅ تأكيد";
+        }
+    }
+
+    // --- User Preferences UI Logic ---
+    function syncPreferencesUI() {
+        const prefs = window.USER_PREFS || JSON.parse(localStorage.getItem("user_preferences")) || {
+            theme: "dark",
+            chat_visible: true,
+            notifications: true
+        };
+        
+        const themeEl = document.getElementById("pref-theme");
+        if (themeEl) themeEl.checked = (prefs.theme === "dark");
+        const chatEl = document.getElementById("pref-chat");
+        if (chatEl) chatEl.checked = (prefs.chat_visible !== false);
+        const notifEl = document.getElementById("pref-notif");
+        if (notifEl) notifEl.checked = (prefs.notifications !== false);
+    }
+
+    // Sync UI when DOM is ready
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(syncPreferencesUI, 200);
+        });
+    } else {
+        setTimeout(syncPreferencesUI, 200);
+    }
+
+    async function handlePrefChange(key, value) {
+        // Auto-save: update local object, apply visually, then send to backend
+        const currentPrefs = window.USER_PREFS || JSON.parse(localStorage.getItem("user_preferences")) || {};
+        currentPrefs[key] = value;
+        
+        // 1. Instant local sync
+        localStorage.setItem("user_preferences", JSON.stringify(currentPrefs));
+        window.USER_PREFS = currentPrefs;
+        
+        // Call the global function from api.js to apply styles immediately
+        if (typeof applyPreferencesToDOM === "function") {
+            applyPreferencesToDOM(currentPrefs);
+        }
+
+        // 2. Background sync to server
+        try {
+            await window.usersAPI.updatePreferences({ [key]: value });
+        } catch (e) {
+            console.error("Failed to save preference to server:", e);
+        }
+    }
+  
+    function initRecharge(method) {
+        alert(`سيتم تحويلك قريباً لدفع عبر ${method}...`);
+        document.getElementById('wallet-modal').classList.remove('show');
+    }
+
+    if (typeof fetchProfile === 'undefined') {
+        window.fetchProfile = async function() {
+            try {
+                const res = await window.authAPI.me();
+                if (res && res.id) {
+                    localStorage.setItem("current_user", JSON.stringify(res));
+                }
+                const coins = Number(res.coins || 0).toFixed(2);
+                
+                const walletCoinsVal = document.getElementById('wallet-coins-val');
+                if (walletCoinsVal) walletCoinsVal.textContent = coins;
+                
+                const walletCoins = document.getElementById('wallet-coins');
+                if (walletCoins) walletCoins.textContent = coins;
+                
+                const userCoinsVal = document.getElementById('user-coins-val');
+                if (userCoinsVal) userCoinsVal.textContent = coins;
+                
+                if (document.getElementById('user-name')) document.getElementById('user-name').textContent = res.full_name;
+                
+                if (res.role === 'admin' || window.isAdmin()) {
+                    const topAdmin = document.getElementById('admin-dash-btn');
+                    if (topAdmin) topAdmin.style.display = 'inline-flex';
+
+                    const bottomAdmin = document.getElementById('admin-bottom-nav-item');
+                    if (bottomAdmin) bottomAdmin.style.display = 'flex';
+                } else {
+                    const topAdmin = document.getElementById('admin-dash-btn');
+                    if (topAdmin) topAdmin.style.display = 'none';
+
+                    const bottomAdmin = document.getElementById('admin-bottom-nav-item');
+                    if (bottomAdmin) bottomAdmin.style.display = 'none';
+                }
+
+                // حذف أي عنصر شات أو دعم قد يظهر بالخطأ في صفحة الإعدادات
+                const leftoverChat = document.getElementById('chat-widget');
+                if (leftoverChat) leftoverChat.remove();
+
+            } catch (err) {}
+        }
+    }
+    // ensure we update profile
+    if (document.readyState === "loading") {
+        window.addEventListener('DOMContentLoaded', () => {
+            if(window.fetchProfile) window.fetchProfile();
+        });
+    } else {
+        if(window.fetchProfile) window.fetchProfile();
+    }
+    </script>
+
+  <!-- Wallet Modal -->
+  <div id="wallet-modal" class="modal" style="position:fixed;inset:0;z-index:10000;background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:2rem;">
+    <div class="modal-content" style="background:#1e293b;border:1px solid rgba(255,255,255,0.1);border-radius:12px;width:100%;max-width:400px;position:relative;">
+      <div class="modal-header" style="padding:1.25rem 1.5rem;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="font-size:18px;font-weight:700;margin:0;color:#fff;">شحن المحفظة 🚀</h3>
+        <button style="background:transparent;border:none;color:#94a3b8;font-size:18px;cursor:pointer;" onclick="document.getElementById('wallet-modal').classList.remove('show')">✕</button>
+      </div>
+      <div class="modal-body" style="padding:1.5rem;">
+        <p style="font-size:13px;color:#94a3b8;margin-bottom:20px;">اختر وسيلة الدفع لتزويد رصيدك من الكوينز.</p>
+        <div class="wallet-option" onclick="initRecharge('vodafone')" style="border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:15px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:15px;background:rgba(255,255,255,0.02);transition:0.2s;" onmouseover="this.style.borderColor='#0ea5e9'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+          <div style="width:40px;height:40px;background:rgba(239,68,68,0.1);border-radius:50%;color:#ef4444;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;">V</div>
+          <div style="font-weight:700;font-size:15px;color:#fff;">فودافون كاش</div>
+        </div>
+        <div class="wallet-option" onclick="initRecharge('instapay')" style="border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:15px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:15px;background:rgba(255,255,255,0.02);transition:0.2s;" onmouseover="this.style.borderColor='#0ea5e9'" onmouseout="this.style.borderColor='rgba(255,255,255,0.1)'">
+          <div style="width:40px;height:40px;background:rgba(168,85,247,0.1);border-radius:50%;color:#a855f7;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;">IP</div>
+          <div style="font-weight:700;font-size:15px;color:#fff;">إنستا باي</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

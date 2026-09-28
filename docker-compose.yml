@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  webpdf_app:
+    build: .
+    container_name: webpdf_elite_service
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      # ربط مجلد التخزين لضمان بقاء الملفات المرفوعة والمختومة عند إعادة التشغيل
+      - ./storage:/app/storage
+      # ربط قاعدة البيانات (لو بتستخدم SQLite) لضمان عدم ضياع بيانات المستخدمين
+      - ./app.db:/app/app.db
+    environment:
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-production-please}
+      - PYTHONUNBUFFERED=1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# ملاحظة: تأكد من إنشاء ملف .env بجانب هذا الملف لوضع الـ JWT_SECRET_KEY الحقيقي

@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تسجيل الدخول — Z-PACT</title>
+  <link rel="icon" href="/frontend/assets/logo.png">
+  <meta name="description" content="سجّل دخولك إلى منصة Z-PACT لحماية وتوزيع المحتوى الرقمي بأحدث تقنيات الختم الذكي." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Outfit:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/frontend/css/global.css?v=2.0.0">
+  <style>
+    /* ===== Full-Screen Layout ===== */
+    body {
+      display: flex;
+      min-height: 100vh;
+      overflow: hidden;
+      background: #0a0f1e;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* ===== Animated Background ===== */
+    .bg-scene {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .bg-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      animation: orbFloat 10s ease-in-out infinite alternate;
+    }
+    .bg-orb-1 { width: 500px; height: 500px; background: var(--primary);    top: -100px; right: -100px; animation-delay: 0s; }
+    .bg-orb-2 { width: 400px; height: 400px; background: var(--secondary);  bottom: -80px; left: -80px; animation-delay: -3s; }
+    .bg-orb-3 { width: 300px; height: 300px; background: var(--accent);     top: 40%; left: 35%; animation-delay: -6s; }
+
+    @keyframes orbFloat {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+
+    /* Grid pattern overlay */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ===== Two-pane layout ===== */
+    .auth-wrapper {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      width: 100%;
+      min-height: 100vh;
+    }
+
+    /* Left: branding panel */
+    .brand-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+      background: linear-gradient(145deg, rgba(56,189,248,0.06) 0%, rgba(129,140,248,0.04) 100%);
+      border-left: 1px solid var(--border);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .brand-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at 50% 40%, rgba(56,189,248,0.08), transparent 65%);
+      pointer-events: none;
+    }
+    .brand-logo-big {
+      font-family: 'Outfit', sans-serif;
+      font-size: 72px;
+      font-weight: 900;
+      letter-spacing: -3px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 30px rgba(56,189,248,0.4));
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+    .brand-panel h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.5px;
+    }
+    .brand-panel p {
+      font-size: 14px;
+      color: var(--text-muted);
+      max-width: 320px;
+      line-height: 1.8;
+    }
+    .feature-list {
+      margin-top: 3rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 100%;
+      max-width: 320px;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      text-align: right;
+    }
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--primary-light), rgba(129,140,248,0.15));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .feature-text strong { display: block; font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .feature-text span   { font-size: 12px; color: var(--text-muted); }
+
+    /* Right: form panel */
+    .form-panel {
+      width: 480px;
+      min-width: 480px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem 2.5rem;
+      background: rgba(10, 15, 30, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      overflow-y: auto;
+    }
+
+    /* ===== Tabs ===== */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 4px;
+      margin-bottom: 2rem;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: var(--font);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      border-radius: calc(var(--radius-md) - 2px);
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(56,189,248,0.3);
+    }
+    .tab-btn:not(.active):hover {
+      color: var(--text-primary);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: slideUp 0.35s cubic-bezier(0.16,1,0.3,1); }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== Input Groups ===== */
+    .input-wrapper {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 16px;
+      pointer-events: none;
+    }
+    .input-wrapper .form-input {
+      padding-right: 42px;
+    }
+    .toggle-password {
+      position: absolute;
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .toggle-password:hover { color: var(--primary); }
+    .input-with-toggle .form-input {
+      padding-right: 42px;
+      padding-left: 40px;
+    }
+
+    /* ===== Forgot Password ===== */
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .forgot-link {
+      font-size: 12px;
+      color: var(--primary);
+      opacity: 0.85;
+      transition: opacity 0.2s;
+    }
+    .forgot-link:hover { opacity: 1; text-decoration: underline; }
+
+    /* ===== Password Strength ===== */
+    .strength-bar {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+    }
+    .strength-segment {
+      flex: 1;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--border);
+      transition: background 0.3s;
+    }
+    .strength-segment.weak   { background: var(--danger); }
+    .strength-segment.medium { background: var(--warning); }
+    .strength-segment.strong { background: var(--success); }
+
+    /* ===== Form footer ===== */
+    .form-footer {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .form-footer a {
+      color: var(--primary);
+      font-weight: 700;
+      margin-right: 4px;
+    }
+    .form-footer a:hover { text-decoration: underline; }
+
+    /* ===== Divider ===== */
+    .or-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 1.25rem 0;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .or-divider::before, .or-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ===== Success State ===== */
+    .success-checkmark {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--success), #059669);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin: 0 auto 1rem;
+      box-shadow: 0 8px 24px rgba(16,185,129,0.4);
+      animation: popIn 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 860px) {
+      .brand-panel { display: none; }
+      .form-panel  {
+        width: 100%;
+        min-width: unset;
+        padding: 2rem 1.5rem;
+        justify-content: center;
+      }
+      .auth-wrapper { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-scene">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+  <div class="bg-grid"></div>
+
+  <div class="auth-wrapper">
+    <!-- ===== Branding Panel ===== -->
+    <div class="brand-panel">
+      <div class="brand-logo-big"><img src="/frontend/assets/logo.png" style="max-width: 150px; height: auto;"></div>
+      <h1>النظام المتكامل لحماية وتوزيع المحتوى الرقمي</h1>
+      <p>منظومة احترافية لختم وتتبع المستندات PDF بأحدث تقنيات الحماية الرقمية</p>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">🔏</div>
+          <div class="feature-text">
+            <strong>ختم ذكي مخصص</strong>
+            <span>كل نسخة تحمل هوية المشتري</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💧</div>
+          <div class="feature-text">
+            <strong>علامات مائية متقدمة</strong>
+            <span>مرئية ومخفية في آنٍ واحد</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🕵️</div>
+          <div class="feature-text">
+            <strong>تتبع التسريب</strong>
+            <span>اعرف مصدر أي نسخة مسرّبة</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Form Panel ===== -->
+    <div class="form-panel">
+      <!-- Mobile logo (only shows when brand panel is hidden) -->
+      <div style="text-align:center;margin-bottom:2rem;display:none" class="mobile-logo">
+        <div style="font-family:'Outfit',sans-serif;font-size:42px;font-weight:900;background:linear-gradient(135deg,var(--primary),var(--secondary));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-2px">Z-PACT</div>
+        <p style="font-size:13px;color:var(--text-muted);margin-top:6px">النظام المتكامل لحماية المحتوى الرقمي</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tabs" role="tablist">
+        <button id="tab-btn-login"    class="tab-btn active" role="tab" aria-selected="true"  aria-controls="tab-login"    onclick="switchTab('login')">تسجيل الدخول</button>
+        <button id="tab-btn-register" class="tab-btn"        role="tab" aria-selected="false" aria-controls="tab-register" onclick="switchTab('register')">حساب جديد</button>
+      </div>
+
+      <!-- Alert Box -->
+      <div id="alert-box" class="hidden" role="alert" aria-live="polite"></div>
+
+      <!-- ===== Login Panel ===== -->
+      <div id="tab-login" class="tab-panel active" role="tabpanel" aria-labelledby="tab-btn-login">
+        <form id="login-form" onsubmit="handleLogin(event)" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-email">البريد الإلكتروني</label>
+            <div class="input-wrapper">
+              <span class="input-icon">✉️</span>
+              <input id="login-email" type="email" class="form-input"
+                     placeholder="example@email.com"
+                     required autocomplete="email">
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="label-row">
+              <label class="form-label" for="login-password">كلمة المرور</label>
+              <a href="#" class="forgot-link" onclick="showForgotDialog(event)">نسيت كلمة المرور؟</a>
+            </div>
+            <div class="input-wrapper input-with-toggle">
+              <span class="input-icon">🔒</span>
+              <input id="login-password" type="password" class="form-input"
+                     placeholder="••••••••"
+                     required autocomplete="current-password">
+              <button type="button" class="toggle-password" aria-label="إظهار/إخفاء كلمة المرور"
+                      onclick="togglePasswordVisibility('login-password', this)">👁️</button>
+            </div>
+          </div>
+          <button type="submit" id="login-btn" class="btn btn-primary btn-full btn-lg mt-2">
+            🚀 تسجيل الدخول
+          </button>
+        </form>
+        <div class="form-footer">
+          ليس لديك حساب؟ <a href="#" onclick="switchTab('register')">أنشئ حساباً مجانياً</a>
+        </div>
+      </div>
+
+      <!-- ===== Register Panel ===== -->
+      <div id="tab-register" class="tab-panel" role="tabpanel" aria-labelledby="tab-btn-register">
+        <form id="register-form" onsubmit="handleRegister(event)" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="reg-name">الاسم الكامل</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input id="reg-name" type="text" class="form-input"
+                     placeholder="محمد أحمد"
+                     required minlength="2" autocomplete="name">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-email">البريد الإلكتروني</label>
+            <div class="input-wrapper">
+              <span class="input-icon">✉️</span>
+              <input id="reg-email" type="email" class="form-input"
+                     placeholder="example@email.com"
+                     required autocomplete="email">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-password">كلمة المرور</label>
+            <div class="input-wrapper input-with-toggle">
+              <span class="input-icon">🔒</span>
+              <input id="reg-password" type="password" class="form-input"
+                     placeholder="8 أحرف على الأقل"
+                     required minlength="8"
+                     oninput="updateStrength(this.value)"
+                     autocomplete="new-password">
+              <button type="button" class="toggle-password" aria-label="إظهار/إخفاء كلمة المرور"
+                      onclick="togglePasswordVisibility('reg-password', this)">👁️</button>
+            </div>
+            <!-- Password strength meter -->
+            <div class="strength-bar" id="strength-bar" aria-hidden="true">
+              <div class="strength-segment" id="seg-1"></div>
+              <div class="strength-segment" id="seg-2"></div>
+              <div class="strength-segment" id="seg-3"></div>
+              <div class="strength-segment" id="seg-4"></div>
+            </div>
+            <span class="form-hint" id="strength-label">أدخل كلمة مرور قوية</span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-confirm">تأكيد كلمة المرور</label>
+            <div class="input-wrapper input-with-toggle">
+              <span class="input-icon">🔐</span>
+              <input id="reg-confirm" type="password" class="form-input"
+                     placeholder="أعد كتابة كلمة المرور"
+                     required autocomplete="new-password">
+              <button type="button" class="toggle-password" aria-label="إظهار/إخفاء"
+                      onclick="togglePasswordVisibility('reg-confirm', this)">👁️</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="reg-ref">كود الدعوة (اختياري)</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🎁</span>
+              <input id="reg-ref" type="text" class="form-input"
+                     placeholder="ABC-1234"
+                     style="letter-spacing: 1px; text-transform: uppercase;">
+            </div>
+          </div>
+          <button type="submit" id="register-btn" class="btn btn-primary btn-full btn-lg mt-2">
+            ✨ إنشاء الحساب
+          </button>
+        </form>
+        <div class="form-footer">
+          لديك حساب بالفعل؟ <a href="#" onclick="switchTab('login')">سجّل الدخول</a>
+        </div>
+      </div>
+
+      <!-- Success state (shown after register) -->
+      <div id="tab-success" class="tab-panel" role="tabpanel">
+        <div style="text-align:center;padding:1rem 0">
+          <div class="success-checkmark">✓</div>
+          <h2 style="font-size:20px;font-weight:800;margin-bottom:8px">تم إنشاء حسابك بنجاح!</h2>
+          <p style="color:var(--text-muted);font-size:14px;margin-bottom:2rem">يمكنك الآن تسجيل الدخول والبدء في استخدام المنصة</p>
+          <button class="btn btn-primary btn-full btn-lg" onclick="switchTab('login')">🚀 الذهاب لتسجيل الدخول</button>
+        </div>
+      </div>
+
+    </div><!-- /form-panel -->
+  </div><!-- /auth-wrapper -->
+
+  <!-- API Core -->
+  <script src="/frontend/js/api.js"></script>
+
+  <script>
+    // ===== Redirect if already logged in =====
+    if (isLoggedIn()) {
+      window.location.href = isAdmin() ? "./admin.html" : "./store.html";
+    }
+
+    // ===== Show mobile logo on small screens =====
+    if (window.innerWidth <= 860) {
+      document.querySelector('.mobile-logo').style.display = 'block';
+    }
+
+    // ===== Auto-fill referral code from URL (?ref=CODE) =====
+    const urlParams = new URLSearchParams(window.location.search);
+    const refCode = urlParams.get('ref');
+    if (refCode) {
+        document.getElementById('reg-ref').value = refCode.toUpperCase();
+        switchTab('register'); // Switch to register tab automatically
+    }
+
+    // ===== Tab Switching =====
+    window.switchTab = (tab) => {
+      const tabs = ['login', 'register', 'success'];
+      tabs.forEach(t => {
+        document.getElementById(`tab-${t}`).classList.toggle('active', t === tab);
+      });
+      // Update tab buttons (only login/register buttons exist)
+      document.getElementById('tab-btn-login')   ?.classList.toggle('active', tab === 'login');
+      document.getElementById('tab-btn-register')?.classList.toggle('active', tab === 'register');
+      hideAlert();
+    };
+
+    // ===== Alert Box =====
+    function showAlert(msg, type = 'error') {
+      const box = document.getElementById('alert-box');
+      const icons = { error: '⚠️', success: '✅', info: 'ℹ️' };
+      box.className = `alert alert-${type}`;
+      box.innerHTML = `<span>${icons[type] || '⚠️'}</span><span>${msg}</span>`;
+      box.classList.remove('hidden');
+      box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function hideAlert() {
+      document.getElementById('alert-box').classList.add('hidden');
+    }
+
+    // ===== Password Visibility Toggle =====
+    window.togglePasswordVisibility = (inputId, btn) => {
+      const input = document.getElementById(inputId);
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      btn.textContent = isHidden ? '🙈' : '👁️';
+    };
+
+    // ===== Password Strength Meter =====
+    window.updateStrength = (val) => {
+      let score = 0;
+      if (val.length >= 8)  score++;
+      if (val.length >= 12) score++;
+      if (/[A-Z]/.test(val) || /[a-z]/.test(val)) score++;
+      if (/\d/.test(val))   score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+      score = Math.min(score, 4);
+
+      const labels  = ['', 'ضعيفة جداً', 'ضعيفة', 'جيدة', 'قوية 💪'];
+      const classes = ['', 'weak', 'weak', 'medium', 'strong'];
+      const colors  = ['', 'var(--danger)', 'var(--warning)', 'var(--warning)', 'var(--success)'];
+
+      const label = document.getElementById('strength-label');
+      label.textContent = val.length ? labels[score] : 'أدخل كلمة مرور قوية';
+      label.style.color = val.length ? colors[score] : '';
+
+      for (let i = 1; i <= 4; i++) {
+        const seg = document.getElementById(`seg-${i}`);
+        seg.className = 'strength-segment ' + (i <= score ? classes[score] : '');
+      }
+    };
+
+    // ===== Forgot Password =====
+    window.showForgotDialog = (e) => {
+      e.preventDefault();
+      showAlert('ميزة استعادة كلمة المرور ستكون متاحة قريباً. تواصل مع المدير لإعادة تعيين كلمة المرور.', 'info');
+    };
+
+    // ===== Login =====
+    window.handleLogin = async (e) => {
+      e.preventDefault();
+      const btn   = document.getElementById('login-btn');
+      const email = document.getElementById('login-email').value.trim();
+      const pass  = document.getElementById('login-password').value;
+
+      if (!email) { showAlert('أدخل البريد الإلكتروني'); return; }
+      if (!pass)  { showAlert('أدخل كلمة المرور'); return; }
+
+      btn.classList.add('btn-loading');
+      hideAlert();
+      try {
+        const res = await authAPI.login(email, pass);
+        window.location.href = res.user.role === 'admin' ? './admin.html' : './store.html';
+      } catch (err) {
+        showAlert(err.message);
+      } finally {
+        btn.classList.remove('btn-loading');
+      }
+    };
+
+    // ===== Register =====
+    window.handleRegister = async (e) => {
+      e.preventDefault();
+      const btn      = document.getElementById('register-btn');
+      const name     = document.getElementById('reg-name').value.trim();
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const confirm  = document.getElementById('reg-confirm').value;
+      const ref      = document.getElementById('reg-ref').value.trim();
+
+      if (!name || name.length < 2) { showAlert('أدخل اسمك الكامل (حرفان على الأقل)'); return; }
+      if (!email)                    { showAlert('أدخل البريد الإلكتروني'); return; }
+      if (password.length < 8)      { showAlert('كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
+      if (password !== confirm)      { showAlert('كلمتا المرور غير متطابقتين'); return; }
+
+      btn.classList.add('btn-loading');
+      hideAlert();
+      try {
+        await authAPI.register({ full_name: name, email, password, referral_code: ref || null });
+        // Switch to success view
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        switchTab('success');
+      } catch (err) {
+        showAlert(err.message);
+      } finally {
+        btn.classList.remove('btn-loading');
+      }
+    };
+  </script>
+</body>
+</html>

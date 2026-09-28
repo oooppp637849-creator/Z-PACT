@@ -1,0 +1,45 @@
+# ================================================================
+# WebPDF Elite — .gitignore
+# ================================================================
+
+# بيئة العمل الافتراضية والتنزيلات المحلية
+.venv/
+venv/
+ENV/
+env/
+
+# ملفات المتغيرات البيئية الحساسة والتوكن (تضاف في Railway يدوياً)
+.env
+.env.*
+.github_token
+push_to_github.py
+
+# ملفات تخزين قاعدة البيانات المحلية
+.data/
+*.db
+*.sqlite3
+
+# مجلدات التخزين المؤقت والملفات المرفوعة والمختومة والرمزية
+storage/
+storage/originals/
+storage/stamped/
+storage/previews/
+storage/avatars/
+
+# سجلات التطبيق ومخرجات الـ Logging
+app.log
+*.log
+
+# ملفات التجميع والـ Python Cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+
+# ملفات أنظمة التشغيل ومحررات الأكواد
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

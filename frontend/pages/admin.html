@@ -1,0 +1,3946 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>لوحة التحكم — Z-PACT</title>
+  <link rel="icon" href="/frontend/assets/logo.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Outfit:wght@600;800&display=swap" rel="stylesheet">
+
+
+    <!-- API Core -->
+    <script src="/frontend/js/api.js?v=2.1.0"></script>
+    <script src="/frontend/js/chat_notif.js?v=2.1.0"></script>
+
+    <!-- Libraries for Stamp Designer -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    </script>
+    
+    <!-- Chart.js for Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Global Styles -->
+    <link rel="stylesheet" href="/frontend/css/global.css?v=2.1.0">
+
+    <style>
+        :root {
+            --sidebar-width: 290px;
+            --admin-bg-base: #070b16;
+            --admin-surface: rgba(13, 20, 38, 0.78);
+            --admin-surface-hover: rgba(22, 33, 62, 0.85);
+            --admin-border: rgba(255, 255, 255, 0.08);
+            --admin-border-glow: rgba(56, 189, 248, 0.3);
+            --admin-primary: #38bdf8;
+            --admin-secondary: #818cf8;
+            --admin-emerald: #10b981;
+            --admin-amber: #f59e0b;
+            --admin-purple: #a855f7;
+            --admin-rose: #f43f5e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            background: var(--admin-bg-base);
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.07) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(129, 140, 248, 0.07) 0%, transparent 45%),
+                linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+            background-attachment: fixed;
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: #f1f5f9;
+            font-family: 'Cairo', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Ambient Glow Backdrop */
+        .ambient-mesh {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .ambient-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+        .ambient-orb-1 { width: 500px; height: 500px; background: #38bdf8; top: -150px; right: -100px; }
+        .ambient-orb-2 { width: 450px; height: 450px; background: #6366f1; bottom: -100px; left: -100px; }
+
+        /* ===== Executive Sidebar ===== */
+        aside {
+            width: var(--sidebar-width);
+            background: rgba(10, 15, 30, 0.92);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+            border-left: 1px solid var(--admin-border);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            z-index: 100;
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.65);
+        }
+
+        .sidebar-header {
+            padding: 1.8rem 1.75rem 1.25rem;
+            border-bottom: 1px solid var(--admin-border);
+        }
+
+        .sidebar-brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-brand-wrap img {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.5));
+            border-radius: 10px;
+        }
+
+        .sidebar-brand-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+            margin: 0;
+            line-height: 1;
+        }
+
+        .sidebar-badge-hq {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 800;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--admin-primary);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            letter-spacing: 0.5px;
+        }
+
+        .sidebar-store-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 1rem 1.25rem 0.5rem;
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(217, 119, 6, 0.05));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: #fbbf24;
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+        .sidebar-store-link:hover {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.22), rgba(217, 119, 6, 0.12));
+            border-color: rgba(245, 158, 11, 0.6);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
+            color: #fff;
+        }
+
+        nav {
+            flex: 1;
+            padding: 1rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 16px;
+            border-radius: 14px;
+            color: rgba(255, 255, 255, 0.65);
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .nav-item i {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.04);
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background: rgba(56, 189, 248, 0.08);
+            color: #ffffff;
+            transform: translateX(-4px);
+        }
+        .nav-item:hover i {
+            background: rgba(56, 189, 248, 0.18);
+            transform: scale(1.1);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.16) 0%, rgba(99, 102, 241, 0.1) 100%);
+            border-right: 3px solid var(--admin-primary);
+            color: #38bdf8;
+            font-weight: 800;
+            box-shadow: 0 4px 20px rgba(56, 189, 248, 0.12);
+        }
+        .nav-item.active i {
+            background: rgba(56, 189, 248, 0.25);
+            color: #fff;
+            filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.6));
+        }
+
+        .sidebar-footer {
+            padding: 1.25rem 1.25rem;
+            border-top: 1px solid var(--admin-border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(7, 11, 24, 0.6);
+        }
+
+        .admin-profile-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .admin-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0284c7, #6366f1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+            flex-shrink: 0;
+        }
+
+        .admin-info-text {
+            flex: 1;
+            overflow: hidden;
+        }
+        .admin-info-name {
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .admin-info-role {
+            font-size: 11px;
+            color: var(--admin-primary);
+            font-weight: 700;
+        }
+
+        /* ===== Main Content Area ===== */
+        main {
+            flex: 1;
+            margin-right: var(--sidebar-width);
+            padding: 2rem 2.5rem;
+            max-width: 1400px;
+            width: calc(100% - var(--sidebar-width));
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Executive Header */
+        .executive-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 1px solid var(--admin-border);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .header-title-box h1 {
+            font-size: 26px;
+            font-weight: 900;
+            margin: 0;
+            color: #fff;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-meta-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .system-pulse-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #10b981;
+        }
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+            animation: pulseDot 2s infinite ease-in-out;
+        }
+        @keyframes pulseDot {
+            0% { transform: scale(0.9); opacity: 0.7; }
+            50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 15px #10b981; }
+            100% { transform: scale(0.9); opacity: 0.7; }
+        }
+
+        .date-live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--admin-border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+
+        .header-store-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(99, 102, 241, 0.1));
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: #38bdf8;
+            padding: 7px 16px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .header-store-btn:hover {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(99, 102, 241, 0.2));
+            border-color: #38bdf8;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
+        }
+
+        /* ===== Quick Actions Hub ===== */
+        .admin-quick-hub {
+            background: linear-gradient(145deg, rgba(17, 24, 46, 0.7) 0%, rgba(11, 17, 33, 0.85) 100%);
+            border: 1px solid var(--admin-border);
+            border-radius: 20px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(16px);
+        }
+        .quick-hub-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .quick-hub-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .quick-hub-btn {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+            font-family: inherit;
+            text-decoration: none;
+        }
+        .quick-hub-btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn-glow-primary {
+            background: linear-gradient(135deg, #0ea5e9, #2563eb);
+            color: #fff;
+            box-shadow: 0 4px 18px rgba(14, 165, 233, 0.4);
+        }
+        .btn-glow-cyan {
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            color: #38bdf8;
+        }
+        .btn-glow-amber {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #fbbf24;
+        }
+        .btn-glow-emerald {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #34d399;
+        }
+
+        /* ===== Bento-Grid KPI Stat Cards ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, rgba(17, 24, 46, 0.8) 0%, rgba(11, 17, 33, 0.95) 100%);
+            border: 1px solid var(--admin-border);
+            border-radius: 20px;
+            padding: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(16px);
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+        }
+
+        .stat-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+            transition: transform 0.25s ease;
+        }
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1);
+        }
+
+        .stat-info {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .stat-info h3 {
+            font-size: 13px;
+            color: #94a3b8;
+            margin: 0 0 4px;
+            font-weight: 700;
+        }
+
+        .stat-info div {
+            font-family: 'Outfit', 'Cairo', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1.1;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin-top: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #cbd5e1;
+            opacity: 0.85;
+        }
+
+        /* Neon Color Variations for KPI Cards */
+        .stat-card.stat-cyan {
+            border-color: rgba(56, 189, 248, 0.25);
+        }
+        .stat-card.stat-cyan .stat-icon {
+            background: rgba(56, 189, 248, 0.12);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+        }
+        .stat-card.stat-cyan:hover {
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 16px 40px rgba(56, 189, 248, 0.2);
+        }
+
+        .stat-card.stat-emerald {
+            border-color: rgba(16, 185, 129, 0.25);
+        }
+        .stat-card.stat-emerald .stat-icon {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.25);
+        }
+        .stat-card.stat-emerald:hover {
+            border-color: rgba(16, 185, 129, 0.5);
+            box-shadow: 0 16px 40px rgba(16, 185, 129, 0.2);
+        }
+
+        .stat-card.stat-amber {
+            border-color: rgba(245, 158, 11, 0.25);
+        }
+        .stat-card.stat-amber .stat-icon {
+            background: rgba(245, 158, 11, 0.12);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+        }
+        .stat-card.stat-amber:hover {
+            border-color: rgba(245, 158, 11, 0.5);
+            box-shadow: 0 16px 40px rgba(245, 158, 11, 0.2);
+        }
+
+        .stat-card.stat-purple {
+            border-color: rgba(168, 85, 247, 0.25);
+        }
+        .stat-card.stat-purple .stat-icon {
+            background: rgba(168, 85, 247, 0.12);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            box-shadow: 0 0 16px rgba(168, 85, 247, 0.25);
+        }
+        .stat-card.stat-purple:hover {
+            border-color: rgba(168, 85, 247, 0.5);
+            box-shadow: 0 16px 40px rgba(168, 85, 247, 0.2);
+        }
+
+        .stat-card.stat-rose {
+            border-color: rgba(244, 63, 94, 0.25);
+        }
+        .stat-card.stat-rose .stat-icon {
+            background: rgba(244, 63, 94, 0.12);
+            color: #fb7185;
+            border: 1px solid rgba(244, 63, 94, 0.3);
+            box-shadow: 0 0 16px rgba(244, 63, 94, 0.25);
+        }
+        .stat-card.stat-rose:hover {
+            border-color: rgba(244, 63, 94, 0.5);
+            box-shadow: 0 16px 40px rgba(244, 63, 94, 0.2);
+        }
+
+        /* ===== Cards & Containers ===== */
+        .card {
+            background: linear-gradient(145deg, rgba(17, 24, 46, 0.75) 0%, rgba(11, 17, 33, 0.9) 100%);
+            border: 1px solid var(--admin-border);
+            border-radius: 20px;
+            padding: 1.6rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(20px);
+            margin-bottom: 1.5rem;
+        }
+
+        .panel {
+            display: none;
+            animation: panelFadeIn 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .panel.active {
+            display: block;
+        }
+        @keyframes panelFadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== Tables Styling ===== */
+        .table-container {
+            background: rgba(11, 17, 33, 0.75);
+            border-radius: 18px;
+            border: 1px solid var(--admin-border);
+            overflow: hidden;
+            margin-top: 1.25rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.035);
+            padding: 14px 18px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #94a3b8;
+            border-bottom: 1px solid var(--admin-border);
+            letter-spacing: 0.3px;
+        }
+
+        td {
+            padding: 14px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+            vertical-align: middle;
+            color: #e2e8f0;
+            transition: background 0.15s ease;
+        }
+
+        tr:hover td {
+            background: rgba(56, 189, 248, 0.03);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .material-title {
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+        }
+
+        .material-icon {
+            font-size: 24px;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: rgba(56, 189, 248, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            flex-shrink: 0;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* Advanced Designer Essentials */
+        #layout-modal.show {
+            display: block;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .designer-overlay {
+            position: fixed;
+            inset: 0;
+            background: #1e293b;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            color: #f1f5f9;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; /* Overlay itself never scrolls */
+        }
+
+        .designer-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .designer-header {
+            height: 60px;
+            background: #0f172a;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            justify-content: space-between;
+        }
+
+        .designer-body {
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: calc(100vh - 60px); /* Explicit height limit */
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        /* Sidebars */
+        .designer-sidebar {
+            width: 300px;
+            height: 100%;
+            background: #1e293b;
+            border-left: 1px solid #334155;
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            overflow-y: auto;
+            flex-shrink: 0;
+            min-height: 0;
+        }
+
+        .designer-tool-btn {
+            width: 100%;
+            background: #334155;
+            border: 1px solid #475569;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .designer-tool-btn:hover {
+            background: #475569;
+        }
+
+        /* Canvas Workspace */
+        .designer-workspace {
+            flex: 1;
+            height: 100%;
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+            min-width: 0;
+            min-height: 0;
+        }
+
+        .canvas-container-wrapper {
+            flex: 1;
+            overflow: auto !important;
+            padding: 100px;
+            background: #020617;
+            /* Extra styles for debug scrollbar prominence */
+            scrollbar-width: thick;
+            scrollbar-color: #4338ca #1e293b;
+            display: flex; /* Still flex, but we'll use margin:auto on child */
+        }
+
+        /* Make scrollbars clearly visible */
+        .canvas-container-wrapper::-webkit-scrollbar {
+            width: 12px;
+            height: 12px;
+        }
+        .canvas-container-wrapper::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .canvas-container-wrapper::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 6px;
+            border: 3px solid #1e293b;
+        }
+        .canvas-container-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+
+        .designer-canvas-container {
+            background: #fff;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+            position: relative;
+            margin: auto; /* Force alignment but allow overflow scrolling */
+        }
+
+        /* HTML Overlay for Arabic stamp labels */
+        #stamp-labels-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 20;
+        }
+        .stamp-label-html {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            background: rgba(255,255,255,0.92);
+            border: 2px solid #6366f1;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-family: 'Cairo', Arial, sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            white-space: nowrap;
+            direction: rtl;
+            unicode-bidi: embed;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            pointer-events: none;
+        }
+        .stamp-label-html.global {
+            border-color: #3b82f6;
+            background: rgba(239,246,255,0.95);
+        }
+
+        /* Responsive Controls in Header */
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .strip-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 20px;
+            transition: background 0.2s;
+        }
+
+        .strip-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .strip-btn.primary {
+            background: var(--primary);
+            color: #fff;
+            padding: 8px 20px;
+        }
+
+        .strip-btn.primary:hover {
+            background: #4f46e5;
+        }
+
+        /* Properties Panel */
+        .prop-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .prop-label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+        }
+
+        .prop-input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* Pagination UI */
+        .page-nav {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+        }
+
+        .page-btn {
+            background: #334155;
+            border: none;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.3;
+        }
+
+        /* Tracking Results */
+        #leak-results {
+            margin-top: 2rem;
+            padding: 2rem;
+            border: 2px solid var(--success);
+            background: var(--success-light);
+            border-radius: var(--radius-lg);
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: 700;
+            color: var(--text-secondary);
+        }
+
+        /* Toast */
+        #toast {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            z-index: 99999;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @media (max-width: 900px) {
+            aside {
+                transform: translateX(100%);
+            }
+
+            main {
+                margin-right: 0;
+            }
+        }
+        .modal-overlay.show {
+            display: flex !important;
+            opacity: 1;
+            pointer-events: all;
+        }
+    
+        /* Native-App Mobile Layout Optimization */
+        @media (max-width: 768px) {
+            aside {
+                bottom: 0;
+                top: auto;
+                left: 0;
+                right: 0;
+                width: 100%;
+                height: 75px;
+                flex-direction: row;
+                border-left: none;
+                border-top: 1px solid var(--border);
+                z-index: 1000;
+                padding: 0;
+                background: rgba(15, 23, 42, 0.95);
+            }
+            .sidebar-header, .sidebar-footer { display: none !important; }
+            nav {
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: center;
+                padding: 0;
+                width: 100%;
+            }
+            .nav-item {
+                flex-direction: column;
+                gap: 4px;
+                font-size: 11px;
+                padding: 8px;
+                background: transparent !important;
+            }
+            .nav-item i { font-size: 20px; margin-bottom: 2px; }
+            .nav-item.active { color: var(--primary); }
+            main {
+                margin-right: 0;
+                padding: 1rem;
+                padding-bottom: 90px; /* space for bottom nav */
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            .grid-2, .grid-3 { grid-template-columns: 1fr !important; }
+            .table-container { overflow-x: auto; }
+            .modal.card { width: 95% !important; margin: 10px; }
+            .executive-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .header-meta-box { width: 100%; justify-content: space-between; }
+        }
+
+        /* Mobile Drawer for Aside */
+        @media (max-width: 900px) {
+            aside {
+                position: fixed !important;
+                top: 0 !important;
+                bottom: 0 !important;
+                right: 0 !important;
+                width: 280px !important;
+                height: 100vh !important;
+                flex-direction: column !important;
+                z-index: 3500 !important;
+                transform: translateX(100%);
+                transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                display: flex !important;
+                background: rgba(10, 15, 30, 0.96) !important;
+            }
+            aside.show {
+                transform: translateX(0) !important;
+            }
+            .sidebar-header, .sidebar-footer {
+                display: flex !important;
+            }
+            nav {
+                flex-direction: column !important;
+                padding: 1rem !important;
+            }
+            .nav-item {
+                flex-direction: row !important;
+                font-size: 14px !important;
+                padding: 11px 16px !important;
+                gap: 12px !important;
+            }
+            main {
+                margin-right: 0 !important;
+                padding: 1.25rem !important;
+                width: 100% !important;
+            }
+            .mobile-menu-btn {
+                display: flex !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Ambient Background Lighting Mesh -->
+    <div class="ambient-mesh">
+        <div class="ambient-orb ambient-orb-1"></div>
+        <div class="ambient-orb ambient-orb-2"></div>
+    </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div id="sidebar-overlay" class="modal-overlay hidden" onclick="toggleSidebar()" style="background:rgba(0,0,0,0.65);z-index:3400;"></div>
+
+    <!-- Fullscreen Loader (For Test Download) -->
+    <div id="fullscreen-loader" class="modal-overlay hidden" style="z-index: 9999; flex-direction: column; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px);">
+        <div class="spinner" style="width: 54px; height: 54px; border-width: 4px; border-top-color: var(--admin-primary);"></div>
+        <h3 class="mt-2" style="color: white; font-weight: 800; font-size: 18px;">جاري تجهيز النسخة التجريبية...</h3>
+        <p style="color: #94a3b8; font-size: 14px; margin-top: 5px;">قد تستغرق العملية بضع ثواني، يرجى الانتظار.</p>
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand-wrap">
+                <img id="admin-logo-img" src="/frontend/assets/logo.png" alt="Z-PACT">
+                <div>
+                    <h1 class="sidebar-brand-title" id="admin-logo-text">Z-PACT</h1>
+                    <div class="sidebar-badge-hq"><span>🛡️</span> مركز القيادة والتحكم</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Direct Store Link -->
+        <a href="store.html" class="sidebar-store-link" target="_blank" title="تصفح متجر المنصة">
+            <span>🏪 متجر المواد المحمية</span>
+            <span style="font-size:11px;opacity:0.85;">معاينة ↗</span>
+        </a>
+
+        <nav>
+            <a href="#" class="nav-item active" onclick="switchPanel('dashboard', event)">
+                <i>📊</i> <span>نظرة عامة</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchPanel('materials', event)">
+                <i>📄</i> <span>الملفات والمعروضات</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchPanel('tracking', event)">
+                <i>🔍</i> <span>تتبع التسريبات</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchPanel('users', event)">
+                <i>👥</i> <span>إدارة المستخدمين</span>
+            </a>
+            <a href="#" class="nav-item" id="nav-spending" onclick="switchPanel('spending', event)">
+                <i>💎</i> <span>مستويات الولاء</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchPanel('blacklist', event)">
+                <i>🚫</i> <span>القائمة السوداء</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchPanel('downloads', event)">
+                <i>📥</i> <span>سجل التحميلات</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchPanel('system-tools', event)">
+                <i>🛠️</i> <span>أدوات النظام</span>
+            </a>
+            <a href="settings.html" class="nav-item">
+                <i>⚙️</i> <span>الإعدادات</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="admin-profile-pill">
+                <div class="admin-avatar">👤</div>
+                <div class="admin-info-text">
+                    <div class="admin-info-name" id="sidebar-admin-name">مصطفى (المدير)</div>
+                    <div class="admin-info-role">Super Admin</div>
+                </div>
+            </div>
+            <button class="btn btn-ghost btn-full" style="color:#ef4444; border:1px solid rgba(239,68,68,0.25); background:rgba(239,68,68,0.06); font-weight:800; border-radius:12px;" onclick="handleLogout()">
+                <i>🚪</i> تسجيل الخروج
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+
+        <!-- Executive Top Command Bar -->
+        <header class="executive-header">
+            <div class="flex gap-2 align-center">
+                <button class="btn btn-ghost mobile-menu-btn" onclick="toggleSidebar()" style="display:none; padding:8px 12px; font-size:20px; border:1px solid var(--admin-border); border-radius:10px;">☰</button>
+                <div class="header-title-box">
+                    <h1 id="panel-title">
+                        <span>📊</span> <span>لوحة التحكم الإدارية</span>
+                    </h1>
+                </div>
+            </div>
+            <div class="header-meta-box">
+                <div class="system-pulse-badge">
+                    <span class="pulse-dot"></span>
+                    <span>النظام متصل ومحمى بالكامل</span>
+                </div>
+                <div class="date-live-badge" id="admin-date-badge">
+                    <span>📅</span> <span id="admin-current-date">اليوم</span>
+                </div>
+                <a href="store.html" target="_blank" class="header-store-btn">
+                    <span>🏪</span> <span>زيارة المتجر</span>
+                </a>
+                <div class="badge badge-primary" style="background:linear-gradient(135deg, rgba(56,189,248,0.2), rgba(99,102,241,0.15)); border:1px solid rgba(56,189,248,0.4); color:#38bdf8; padding:6px 14px; border-radius:12px; font-weight:800; font-size:13px;">
+                    <span id="admin-name">مصطفى</span> (مسؤول)
+                </div>
+            </div>
+        </header>
+
+        <!-- UI Alert -->
+        <div id="ui-alert" class="hidden"></div>
+
+        <!-- ===== PANEL: DASHBOARD ===== -->
+        <div id="panel-dashboard" class="panel active">
+            <!-- Quick Hub Actions -->
+            <div class="admin-quick-hub">
+                <div class="quick-hub-title">
+                    <span>⚡ إجراءات المشرف السريعة</span>
+                </div>
+                <div class="quick-hub-actions">
+                    <button class="quick-hub-btn btn-glow-primary" onclick="openUploadModal()">
+                        <i>➕</i> <span>رفع مذكرة جديدة</span>
+                    </button>
+                    <button class="quick-hub-btn btn-glow-cyan" onclick="switchPanel('tracking', event)">
+                        <i>🔍</i> <span>كشف تسريب ملف</span>
+                    </button>
+                    <button class="quick-hub-btn btn-glow-amber" onclick="switchPanel('users', event)">
+                        <i>👥</i> <span>إدارة الأرصدة والمستخدمين</span>
+                    </button>
+                    <a href="store.html" class="quick-hub-btn btn-glow-emerald" target="_blank">
+                        <i>🏪</i> <span>تصفح متجر المنصة</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Bento-Grid KPI Stat Cards -->
+            <div class="stats-grid">
+                <div class="stat-card stat-cyan">
+                    <div class="stat-icon">📄</div>
+                    <div class="stat-info">
+                        <h3>إجمالي الملفات</h3>
+                        <div id="stat-total-materials">0</div>
+                        <span class="stat-trend"><span>⚡</span> ملفات رقمية محمية</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-emerald">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <h3>ملفات منشورة</h3>
+                        <div id="stat-published-materials">0</div>
+                        <span class="stat-trend"><span>🟢</span> جاهزة للبيع بالمتجر</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-amber">
+                    <div class="stat-icon">🪙</div>
+                    <div class="stat-info">
+                        <h3>متوسط السعر</h3>
+                        <div id="stat-avg-price">0 كوينز</div>
+                        <span class="stat-trend"><span>💎</span> تسعير متوازن</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-purple">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <h3>إجمالي المستخدمين</h3>
+                        <div id="stat-total-users">0</div>
+                        <span class="stat-trend"><span>📈</span> حسابات موثقة</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-rose">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-info">
+                        <h3>إجمالي الأرباح والمبيعات</h3>
+                        <div id="stat-total-revenue">0 ج.م</div>
+                        <span class="stat-trend"><span>🔥</span> إجمالي العمليات</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2 gap-2 mb-3">
+                <div class="card">
+                    <h2 class="mb-2" style="font-size: 16px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <span>📊</span> <span>اتجاه الأرباح (آخر 30 يوم)</span>
+                    </h2>
+                    <canvas id="revenueChart" height="200"></canvas>
+                </div>
+                <div class="card">
+                    <h2 class="mb-2" style="font-size: 16px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <span>👥</span> <span>نمو المستخدمين والعملاء</span>
+                    </h2>
+                    <canvas id="usersChart" height="200"></canvas>
+                </div>
+            </div>
+
+            <div class="grid-2 gap-2">
+                <div class="card">
+                    <h2 class="mb-2" style="font-size: 16px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <span>🔝</span> <span>الأكثر طلباً ومبيعاً</span>
+                    </h2>
+                    <div id="top-selling-list" class="flex flex-column gap-2">
+                        <!-- JS Injected -->
+                    </div>
+                </div>
+                <div class="card">
+                    <h2 class="mb-2" style="font-size: 16px; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <span>🔔</span> <span>تنبيهات وحالة النظام</span>
+                    </h2>
+                    <div id="system-alerts" style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                        لا توجد تنبيهات عاجلة حالياً. حماية التتبع والأختام الذكية تعمل بكفاءة 100%.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PANEL: MATERIALS ===== -->
+        <div id="panel-materials" class="panel">
+            <div class="flex-between mb-2">
+                <h2 style="font-size: 18px; font-weight: 700;">قائمة الملفات</h2>
+                <button class="btn btn-primary" onclick="openUploadModal()">
+                    <i>➕</i> رفع ملف جديد
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table id="materials-table">
+                    <thead>
+                        <tr>
+                            <th>الملف</th>
+<!-- <th>السعر النقدي</th> -->
+                            <th>سعر الكوينز</th>
+                            <th>الصفحات</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materials-tbody">
+                        <!-- Rows will be injected here -->
+                    </tbody>
+                </table>
+                <div id="table-loader" class="text-center p-3 hidden">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PANEL: TRACKING ===== -->
+        <div id="panel-tracking" class="panel">
+            <div class="card">
+                <h2 class="mb-1" style="font-size: 18px;">تتبع مصدر الملف المسرّب</h2>
+                <p class="text-muted mb-2">أدخل كود العلامة المخفية (Hidden Mark) المستخرج من الملف المسرّب للكشف عن هوية المشتري.</p>
+
+                <div class="flex gap-2">
+                    <input type="text" id="tracking-input" class="form-input"
+                        placeholder="مثال: PID:123|PAGE:1|abc12345" style="flex:1">
+                    <button class="btn btn-primary" id="track-btn" onclick="handleTrackLeak()">بحث وتتبع</button>
+                </div>
+
+                <div id="tracking-loader" class="text-center mt-3 hidden">
+                    <div class="spinner" style="margin: 0 auto;"></div>
+                    <p class="mt-1">جارِ البحث في قاعدة البيانات الرقمية...</p>
+                </div>
+
+                <div id="leak-results" class="hidden">
+                    <h3 class="mb-2 text-success">✓ تم العثور على المسرّب!</h3>
+                    <div class="grid-2 gap-2 mb-2">
+                        <div style="background:var(--bg-input); padding:15px; border-radius:var(--radius-md); border:1px solid var(--border)">
+                            <h4 style="margin-bottom:10px; font-weight:700; color:var(--primary)">👤 بيانات المستخدم الأصلية</h4>
+                            <div class="result-item"><span class="result-label">ID النظام:</span> <span id="res-user-id"></span></div>
+                            <div class="result-item"><span class="result-label">الاسم الحقيقي:</span> <span id="res-user-name"></span></div>
+                            <div class="result-item"><span class="result-label">الإيميل:</span> <span id="res-user-email"></span></div>
+                            <button id="ban-btn-leak" class="btn btn-sm btn-danger btn-full mt-2" onclick="handleBanUserFromLeak()">🚫 حظر هذا المستخدم فوراً</button>
+                        </div>
+                        <div style="background:rgba(239,68,68,0.1); padding:15px; border-radius:var(--radius-md); border:1px solid rgba(239,68,68,0.3)">
+                            <h4 style="margin-bottom:10px; font-weight:700; color:#ef4444">📄 بيانات المذكرة المسرّبة</h4>
+                            <div class="result-item"><span class="result-label">رقم العملية:</span> <span id="res-purchase-id"></span></div>
+                            <div class="result-item"><span class="result-label">المذكرة:</span> <span id="res-mat-name"></span></div>
+                            <div class="result-item"><span class="result-label">تاريخ الشراء:</span> <span id="res-date"></span></div>
+                            <div class="result-item"><span class="result-label">اسم الختم:</span> <span id="res-stamp-name"></span></div>
+                            <div class="result-item"><span class="result-label">هاتف الختم:</span> <span id="res-stamp-phone"></span></div>
+                        </div>
+                    </div>
+                    <div style="background:var(--bg-input); padding:15px; border-radius:var(--radius-md); border:1px solid var(--border); margin-top:10px">
+                        <h4 style="margin-bottom:10px; font-weight:700">📜 سجل الملفات المحتمل تسريبها (<span id="res-history-count">0</span>)</h4>
+                        <div id="res-history-list" style="max-height: 200px; overflow-y:auto; font-size:13px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PANEL: USERS ===== -->
+        <div id="panel-users" class="panel">
+            <div class="card">
+                <div class="flex-between mb-2">
+                    <h2 style="font-size: 18px; font-weight: 700;">👥 إدارة الحسابات والأرصدة</h2>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="user-search" placeholder="ابحث بالاسم، الإيميل أو الـ ID..." class="input" style="width:250px" onkeyup="if(event.key==='Enter') loadUsers()">
+                        <button class="btn btn-primary" onclick="loadUsers()">🔍 بحث</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table id="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>المستخدم</th>
+                                <th>الإيميل</th>
+                                <th>الرصيد (كوينز)</th>
+                                <th>التاريخ</th>
+                                <th>الحالة</th>
+                                <th>الأجهزة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <!-- Rows injected via JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PANEL: SPENDING LEVELS ===== -->
+        <div id="panel-spending" class="panel">
+            <div class="card">
+                <div class="flex-between mb-2">
+                    <h2 style="font-size: 18px; font-weight: 700;">💎 مستويات الإنفاق والولاء</h2>
+                    <button class="btn btn-primary" onclick="openSpendingModal()">+ إضافة مستوى جديد</button>
+                </div>
+                <p class="text-muted mb-3">حدد مستويات الإنفاق لتقديم كوبونات هدايا تلقائية للطلاب عند الوصول إليها.</p>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الحد الأدنى (كوينز)</th>
+                            <th>المكافأة (كوينز)</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="spending-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===== PANEL: BLACKLIST ===== -->
+        <div id="panel-blacklist" class="panel">
+            <div class="card">
+                <div class="flex-between mb-2">
+                    <h2 style="font-size: 18px; font-weight: 700;">🚫 القائمة السوداء (Blacklist)</h2>
+                    <button class="btn btn-primary" onclick="openModal('blacklist-modal')">+ إضافة بيان محظور</button>
+                </div>
+                <p class="text-muted mb-3">هنا يمكنك حظر أرقام هواتف أو أسماء لمنع المسرّبين المعروفين من استخدام بياناتهم مرة أخرى.</p>
+                
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>النوع</th>
+                            <th>القيمة المحظورة</th>
+                            <th>السبب</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="blacklist-tbody">
+                        <!-- Content via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===== PANEL: DOWNLOADS ===== -->
+        <div id="panel-downloads" class="panel">
+            <div class="card">
+                <div class="flex-between mb-2">
+                    <div>
+                        <h2 style="font-size: 18px; font-weight:700">📥 التحميلات الجاهزة</h2>
+                        <p class="text-muted" style="font-size:13px">كل الملفات التي جربتها أو حملتها مؤخراً.</p>
+                    </div>
+                    <button class="btn btn-ghost btn-sm" onclick="loadRecentJobsList()">🔄 تحديث</button>
+                </div>
+                <div class="materials-grid" id="downloads-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+                    <!-- JS Injected -->
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== PANEL: SYSTEM TOOLS ===== -->
+        <div id="panel-system-tools" class="panel">
+            <div class="grid-2 gap-2">
+                <!-- Database Management -->
+                <div class="card">
+                    <h2 class="mb-2" style="font-size: 18px; font-weight: 700;">🗄️ إدارة قاعدة البيانات</h2>
+                    <p class="text-muted mb-3">يمكنك تحميل نسخة احتياطية كاملة من قاعدة البيانات الحالية (SQLite) مباشرة إلى جهازك.</p>
+                    <button class="btn btn-primary btn-full" onclick="downloadDatabase()">
+                        <i>📥</i> تحميل نسخة احتياطية (database.db)
+                    </button>
+                </div>
+
+                
+                <!-- Restore DB -->
+                <div class="card p-5 bg-card border border-border rounded-xl shadow-lg hover:shadow-cyan-500/20 transition-all">
+                    <h2 class="mb-2 text-lg font-bold text-white">🔄 استعادة قاعدة البيانات</h2>
+                    <p class="text-sm text-gray-400 mb-3">رفع ملف database.db لاستبدال القاعدة الحالية.</p>
+                    <input type="file" id="db-upload" accept=".db,.sqlite" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30 mb-3">
+                    <button class="btn btn-danger w-full flex items-center justify-center gap-2" onclick="handleRestoreDB()">
+                        <i>⚠️</i> استعادة الآن
+                    </button>
+                </div>
+
+                <!-- Restore Materials -->
+                <div class="card p-5 bg-card border border-border rounded-xl shadow-lg hover:shadow-indigo-500/20 transition-all">
+                    <h2 class="mb-2 text-lg font-bold text-white">📚 استيراد المذكرات (ZIP)</h2>
+                    <p class="text-sm text-gray-400 mb-3">رفع ملف بصيغة ZIP يحتوي على ملفات PDF الأصلية.</p>
+                    <input type="file" id="materials-upload" accept=".zip" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-500/20 file:text-indigo-400 hover:file:bg-indigo-500/30 mb-3">
+                    <button class="btn btn-primary w-full flex items-center justify-center gap-2" style="background: var(--secondary)" onclick="handleRestoreMaterials()">
+                        <i>📦</i> رفع وفك الضغط
+                    </button>
+                </div>
+
+                <!-- Broadcast System -->
+                <div class="card">
+                    <h2 class="mb-2" style="font-size: 18px; font-weight: 700;">📢 إشعارات النظام</h2>
+                    <p class="text-muted mb-3">أرسل تنبيهاً أو رسالة هامة لجميع المستخدمين أو مستخدم محدد.</p>
+                    <div class="form-group mb-2">
+                        <input type="text" id="notif-target" class="input" placeholder="ID المستخدم (اتركه فارغاً للجميع)">
+                    </div>
+                    <div class="form-group mb-2">
+                        <input type="text" id="notif-title" class="input" placeholder="عنوان الإشعار">
+                    </div>
+                    <div class="form-group mb-2">
+                        <textarea id="notif-message" class="input" placeholder="نص الرسالة" rows="2"></textarea>
+                    </div>
+                    <button class="btn btn-secondary btn-full" onclick="sendAdminNotification()">
+                        <i>🚀</i> إرسال الإشعار
+                    </button>
+                </div>
+            </div>
+
+            <div class="card mt-2">
+                <h2 class="mb-2" style="font-size: 18px; font-weight: 700;">🔧 معلومات السيرفر</h2>
+                <div id="system-stats-content">
+                    <p class="text-muted">جاري الاتصال بالسيرفر...</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ===== MODAL: UPLOAD/EDIT MATERIAL ===== -->
+    <div id="material-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="m-modal-title">رفع ملف جديد</h2>
+                <button class="modal-close" onclick="closeModal('material-modal')">&times;</button>
+            </div>
+            <form id="material-form" onsubmit="handleMaterialSubmit(event)">
+                <input type="hidden" id="m-id">
+                <div class="form-group">
+                    <label class="form-label">عنوان الملف</label>
+                    <input type="text" id="m-title" class="form-input" placeholder="اسم الكتاب أو المذكرة" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">التاج (Tag) - للعلامة المائية (اختياري)</label>
+                    <input type="text" id="m-tag" class="form-input" placeholder="مثال: الرياضيات، كيمياء... يستبدل {tag}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الوصف</label>
+                    <textarea id="m-desc" class="form-input" rows="3" placeholder="وصف موجز للمحتوى"></textarea>
+                </div>
+                <div class="form-group" id="cover-field">
+                    <label class="form-label">صورة الغلاف (Cover Image) - اختياري</label>
+                    <input type="file" id="m-cover" class="form-input" accept="image/*">
+                </div>
+                <div class="grid-2">
+                    <div class="form-group" style="display:none;">
+                        <label class="form-label">السعر (ج.م)</label>
+                        <input type="number" id="m-price" class="form-input" value="0.00" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">السعر (كوينز)</label>
+                        <input type="number" id="m-price-coins" class="form-input" placeholder="0" step="1" required>
+                    </div>
+                </div>
+                <div id="file-field" class="form-group">
+                    <label class="form-label">ملف PDF</label>
+                    <input type="file" id="m-file" class="form-input" accept="application/pdf">
+                </div>
+                <div class="form-group flex gap-2">
+                    <input type="checkbox" id="m-compress" checked>
+                    <label for="m-compress" style="font-size: 13px;">تفعيل ضغط الملف (لتقليل الحجم)</label>
+                </div>
+                <div class="mt-2 flex gap-2">
+                    <button type="submit" id="m-submit-btn" class="btn btn-primary flex-1">حفظ البيانات</button>
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('material-modal')">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- ===== MODAL: RECHARGE COINS ===== -->
+    <div id="recharge-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">💰 شحن رصيد مستخدم</h2>
+                <button class="modal-close" onclick="closeModal('recharge-modal')">&times;</button>
+            </div>
+            <form onsubmit="handleRechargeSubmit(event)">
+                <input type="hidden" id="recharge-user-id">
+                <div class="form-group">
+                    <label class="form-label">المبلغ (كوينز)</label>
+                    <input type="number" id="recharge-amount" class="form-input" placeholder="مثلاً: 50" required min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ملاحظات (اختياري)</label>
+                    <input type="text" id="recharge-desc" class="form-input" placeholder="مثلاً: شحن رصيد مكافأة">
+                </div>
+                <div class="mt-2 flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-1">شحن الرصيد الآن</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('recharge-modal')">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: PURCHASE DETAILS (Admin Only) ===== -->
+    <div id="purchase-details-modal" class="modal-overlay" style="z-index: 4000;">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2 class="modal-title">📄 تفاصيل بيانات الختم</h2>
+                <button class="modal-close" onclick="closeModal('purchase-details-modal')">&times;</button>
+            </div>
+            <div class="modal-body" id="pd-modal-content">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: ADD BLACKLIST ===== -->
+    <div id="blacklist-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🚫 إضافة للقائمة السوداء</h2>
+                <button class="modal-close" onclick="closeModal('blacklist-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="blacklist-form" onsubmit="handleAddBlacklist(event)">
+                    <div class="form-group">
+                        <label>نوع البيان</label>
+                        <select id="bl-type" class="input" required>
+                            <option value="phone">رقم هاتف</option>
+                            <option value="name">اسم شخص / مدرس</option>
+                            <option value="text">نص مخصص / علامة مائية</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>القيمة (الرقم أو الاسم)</label>
+                        <input type="text" id="bl-value" class="input" placeholder="مثلاً: 01012345678" required>
+                    </div>
+                    <div class="form-group">
+                        <label>السبب (اختياري)</label>
+                        <input type="text" id="bl-reason" class="input" placeholder="مثلاً: مسرّب سابق لمذكرة س">
+                    </div>
+                    <button type="submit" id="bl-submit-btn" class="btn btn-primary btn-full mt-2">إضافة للحظر</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: CHOOSE LAYOUT TYPE ===== -->
+    <div id="choose-layout-modal" class="modal" style="position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,0.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:2rem;">
+        <div class="modal-content" style="max-width: 500px; background: #0f172a; border: 1px solid #334155; border-radius: 16px; padding: 2rem; color: #fff; text-align: center; box-shadow: var(--shadow-lg);">
+            <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 1.5rem;">اختر نوع التنسيق المراد تعديله 🎨</h3>
+            <p style="font-size: 13.5px; color: #94a3b8; margin-bottom: 2rem; line-height: 1.6;">كل مادة لها تنسيقان منفصلان تماماً لتسهيل ضبط الأماكن والشفافية لكل منهما بشكل مستقل:</p>
+            <div style="display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem;">
+                <button class="btn btn-primary" onclick="selectLayoutAndOpen('default_text')" style="background: linear-gradient(135deg, #0ea5e9, #2563eb); border: none; padding: 16px; font-weight: bold; font-size: 14px; border-radius: 12px; cursor: pointer; color: white;">
+                    🛡️ تنسيق العلامة المائية النصية (Text Watermark)
+                </button>
+                <button class="btn btn-primary" onclick="selectLayoutAndOpen('default_logo')" style="background: linear-gradient(135deg, #818cf8, #4f46e5); border: none; padding: 16px; font-weight: bold; font-size: 14px; border-radius: 12px; cursor: pointer; color: white;">
+                    🖼️ تنسيق لوجو المنصة / المعلم (Logo Watermark)
+                </button>
+            </div>
+            <button class="btn btn-ghost" onclick="document.getElementById('choose-layout-modal').style.display = 'none'" style="color: #94a3b8; font-weight: bold;">إلغلاق</button>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: LAYOUT DESIGNER ===== -->
+    <!-- ===== ADVANCED STAMP DESIGNER OVERLAY ===== -->
+    <div id="layout-modal" class="designer-overlay">
+        <div class="designer-header">
+            <div class="flex gap-2">
+                <span class="badge badge-primary">محرر الأختام المتقدم</span>
+                <h2 style="font-size: 14px;" id="designer-title">تحميل الملف...</h2>
+            </div>
+
+            <!-- Page & Zoom Controls in Header -->
+            <div class="header-nav">
+                <div class="page-nav">
+                    <button class="page-btn" id="prev-page" onclick="designer.prevPage()">◀</button>
+                    <span style="font-size: 13px; font-weight: bold; min-width: 90px; text-align: center;">
+                        صفحة <span id="current-page">1</span> من <span id="total-pages">1</span>
+                    </span>
+                    <button class="page-btn" id="next-page" onclick="designer.nextPage()">▶</button>
+                </div>
+                <div style="width:1px; height:16px; background:rgba(255,255,255,0.1)"></div>
+                <div class="page-nav">
+                    <button class="page-btn" onclick="designer.zoomOut()">-</button>
+                    <span id="zoom-level" style="font-size: 13px; font-weight: bold; min-width: 45px; text-align:center">100%</span>
+                    <button class="page-btn" onclick="designer.zoomIn()">+</button>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button class="btn btn-sm btn-primary" onclick="designer.downloadTest()" title="تحميل نسخة تجريبية لمعاينة الأختام">
+                    <i>📥</i> تحميل نسخة تجريبية
+                </button>
+                <button class="btn btn-sm btn-success" onclick="designer.save()">حفظ التنسيق</button>
+                <button class="btn btn-sm btn-danger" onclick="designer.close()">إغلاق</button>
+            </div>
+        </div>
+
+        <div class="designer-body">
+            <!-- Left Sidebar: Tools -->
+            <div class="designer-sidebar" style="border-right: none; border-left: 1px solid #334155; overflow-y: auto;">
+                <h3 class="mb-2" style="font-size: 14px; color: var(--primary); font-weight: bold;">أدوات الإضافة (النصوص)</h3>
+                <button class="designer-tool-btn" onclick="designer.addStamp('name')">
+                    <span>👤</span> الاسم الشخصي للمشتري
+                </button>
+                <button class="designer-tool-btn" onclick="designer.addStamp('phone')">
+                    <span>📱</span> رقم هاتف المشتري
+                </button>
+                <button class="designer-tool-btn" onclick="designer.addStamp('doc_name')">
+                    <span>📚</span> اسم المذكرة
+                </button>
+                
+                <div class="divider" style="background: #334155;" id="watermark-text-tool-divider"></div>
+                <h3 class="mb-2" style="font-size: 14px; color: var(--success); font-weight: bold;" id="watermark-text-tool-title">العلامة المائية (نص ثابت)</h3>
+                <button class="designer-tool-btn" onclick="designer.addStamp('watermark')" id="add-watermark-btn">
+                    <span>🛡️</span> إضافة علامة مائية
+                </button>
+
+                <div class="divider" style="background: #334155;" id="logo-tool-divider"></div>
+                <h3 class="mb-2" style="font-size: 14px; color: #818cf8; font-weight: bold;" id="logo-tool-title">اللوجو / الشعار (صورة)</h3>
+                <button class="designer-tool-btn" onclick="designer.addStamp('logo')" id="add-logo-btn">
+                    <span>🖼️</span> إضافة اللوجو بالصفحة
+                </button>
+                <div style="padding: 0 8px; margin-top: 5px;" id="logo-upload-container">
+                    <input type="file" id="logo-upload" accept="image/png, image/jpeg" style="display:none" onchange="designer.uploadLogo(event)">
+                    <button class="designer-tool-btn" style="background:#1e293b; border-color:#334155; padding: 6px; font-size: 11px;" onclick="document.getElementById('logo-upload').click()">
+                        <span>📤</span> رفع/تغيير اللوجو الخاص بك
+                    </button>
+                    <p style="font-size: 10px; color: #94a3b8; margin-top: 4px; text-align: center;">(يتم إزالة الخلفية البيضاء تلقائياً)</p>
+                </div>
+
+                <div class="divider" style="background: #334155;"></div>
+                <h3 class="mb-2" style="font-size: 14px; opacity: 0.8;">قوالب الأختام</h3>
+                <button class="designer-tool-btn" style="background: #0ea5e9; border-color: #0284c7" onclick="designer.openSavePresetModal()">
+                    <span>💾</span> حفظ كقالب جديد
+                </button>
+                <button class="designer-tool-btn" style="background: #6366f1; border-color: #4f46e5" onclick="designer.openLoadPresetModal()">
+                    <span>📂</span> تحميل قالب جاهز
+                </button>
+
+                <div class="divider" style="background: #334155;"></div>
+                <p style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
+                    * الأختام المضافة ستظهر للمشتري ببياناته الحقيقية عند التحميل.
+                </p>
+            </div>
+
+            <!-- Center: Workspace -->
+            <div class="designer-workspace">
+                <div class="canvas-container-wrapper" id="canvas-wrapper">
+                    <div class="designer-canvas-container">
+                        <canvas id="designer-canvas"></canvas>
+                        <div id="stamp-labels-overlay"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Properties -->
+            <div class="designer-sidebar" id="props-sidebar">
+                <h3 class="mb-2" style="font-size: 14px; opacity: 0.8;">خصائص العنصر</h3>
+
+                <div id="no-selection" class="text-center p-3 text-muted" style="font-size: 13px;">
+                    حدد عنصراً لتعديله
+                </div>
+
+                <div id="selection-props" class="hidden">
+
+                <div id="designer-tabs" style="display:flex; border-bottom:1px solid #334155; margin-bottom:15px;">
+                    <button class="btn btn-ghost btn-sm active" style="flex:1; border-radius:0; border-bottom:2px solid var(--primary);" onclick="switchDesignerTab('text', this)">نص</button>
+                    <button class="btn btn-ghost btn-sm" style="flex:1; border-radius:0; border-bottom:2px solid transparent;" onclick="switchDesignerTab('logo', this)">لوجو</button>
+                </div>
+
+                    <div class="prop-group">
+                        <span style="font-size: 11px; opacity: 0.6;">النص (اختياري)</span>
+                        <input type="text" id="prop-text" class="prop-input" placeholder="نص مخصص للختم..."
+                            oninput="designer.updateFromUI()">
+                    </div>
+
+                    <div class="prop-group">
+                        <span id="size-label" style="font-size: 11px; opacity: 0.6;">الحجم</span>
+                        <input type="number" id="prop-size" class="prop-input" step="1"
+                            oninput="designer.updateFromUI()">
+                    </div>
+
+                    <div class="prop-group">
+                        <label class="prop-label">الموقع (نسبة مئوية)</label>
+                        <div class="grid-2">
+                            <div>
+                                <span style="font-size: 11px; opacity: 0.6;">X%</span>
+                                <input type="number" id="prop-x" class="prop-input" step="1"
+                                    oninput="designer.updateFromUI()">
+                            </div>
+                            <div>
+                                <span style="font-size: 11px; opacity: 0.6;">Y%</span>
+                                <input type="number" id="prop-y" class="prop-input" step="0.1"
+                                    oninput="designer.updateFromUI()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prop-group">
+                        <label class="prop-label">التنسيق والشكل</label>
+                        <div class="grid-2">
+                            <div>
+                                <span style="font-size: 11px; opacity: 0.6;">الشفافية</span>
+                                <input type="number" id="prop-opacity" class="prop-input" step="0.05" min="0" max="1"
+                                    oninput="designer.updateFromUI()">
+                            </div>
+                            <div>
+                                <span style="font-size: 11px; opacity: 0.6;">الدوران (درجة)</span>
+                                <input type="number" id="prop-rotate" class="prop-input" oninput="designer.updateFromUI()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prop-group">
+                        <span style="font-size: 11px; opacity: 0.6;">اللون</span>
+                        <input type="color" id="prop-color" class="prop-input" style="height: 38px; padding: 2px;"
+                            oninput="designer.updateFromUI()">
+                    </div>
+
+                    <div class="prop-group" id="watermark-pattern-area" class="hidden">
+                        <span style="font-size: 11px; opacity: 0.6;">نمط العلامة المائية</span>
+                        <select id="prop-pattern" class="prop-input" onchange="designer.updateFromUI()">
+                            <option value="single">ختم واحد</option>
+                            <option value="diagonal">مائل (Diagonal)</option>
+                            <option value="tiled">مكرر (Tiled)</option>
+                        </select>
+                    </div>
+
+                    <div class="divider" style="background: #334155;"></div>
+
+                    <div class="flex gap-2 mb-2">
+                        <input type="checkbox" id="prop-global" onchange="designer.updateFromUI()">
+                        <label for="prop-global" style="font-size: 13px;">على جميع الصفحات</label>
+                    </div>
+
+                    <div class="flex gap-2 mb-2">
+                        <input type="checkbox" id="prop-under-content" onchange="designer.updateFromUI()">
+                        <label for="prop-under-content" style="font-size: 13px;">خلفية (تحت محتوى المذكرة)</label>
+                    </div>
+
+                    <div id="exclusions-area" class="prop-group hidden">
+                        <span style="font-size: 11px; opacity: 0.6;">استبعاد صفحات (مثلاً: 1, 2)</span>
+                        <input type="text" id="prop-exclusions" class="prop-input" placeholder="1, 2, 5"
+                            oninput="designer.updateFromUI()">
+                    </div>
+
+                    <button class="btn btn-danger btn-full btn-sm" onclick="designer.deleteSelected()">حذف
+                        العنصر</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: SPENDING LEVEL ===== -->
+    <div id="spending-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title">إضافة مستوى إنفاق</h2>
+                <button class="modal-close" onclick="closeModal('spending-modal')">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">الحد الأدنى للإنفاق (كوينز)</label>
+                <input type="number" id="spending-threshold" class="form-input" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">قيمة المكافأة (كوينز)</label>
+                <input type="number" id="spending-reward" class="form-input" required>
+            </div>
+            <button class="btn btn-primary btn-full" onclick="handleSpendingSubmit()">حفظ المستوى</button>
+        </div>
+    </div>
+
+    <!-- ===== MODAL: AUDIT LOG ===== -->
+    <div id="audit-modal" class="modal-overlay">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 class="modal-title">سجل التعديلات والأمان</h2>
+                <button class="modal-close" onclick="closeModal('audit-modal')">&times;</button>
+            </div>
+            <div id="audit-list" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Device Management -->
+    <div id="devices-modal" class="modal-overlay hidden">
+        <div class="modal card" style="width: 700px; max-width: 95%;">
+            <div class="flex-between mb-2">
+                <h2 style="font-size: 18px; font-weight: 700;">📱 الأجهزة المسجلة للطالب</h2>
+                <button class="btn btn-ghost" onclick="closeModal('devices-modal')">✖</button>
+            </div>
+            <p class="text-muted mb-2" style="font-size: 13px;">هنا تظهر المتصفحات أو الأجهزة التي سجل منها الطالب دخوله. الحد الأقصى للطالب هو جهازين.</p>
+            
+            <div class="table-container mb-2">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Device ID</th>
+                            <th>المتصفح</th>
+                            <th>آخر IP</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="devices-tbody"></tbody>
+                </table>
+            </div>
+
+            <div class="flex-between">
+                <button class="btn btn-ghost" onclick="closeModal('devices-modal')">إغلاق</button>
+                <button id="reset-devices-btn" class="btn btn-danger" onclick="handleResetAllDevices()">
+                    🔄 إعادة تعيين كل الأجهزة
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Presets -->
+    <div id="preset-modal" class="modal-overlay" style="z-index: 3000;">
+        <div class="modal" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 class="modal-title" id="preset-modal-title">القوالب</h2>
+                <button class="modal-close" onclick="closeModal('preset-modal')">&times;</button>
+            </div>
+            <div id="preset-save-ui" class="hidden">
+                <div class="form-group">
+                    <label class="form-label">اسم القالب</label>
+                    <input type="text" id="preset-name" class="form-input" placeholder="مثلاً: ختم الحماية الأساسي">
+                </div>
+                <button class="btn btn-primary btn-full" onclick="designer.savePreset()">حفظ</button>
+            </div>
+            <div id="preset-load-ui" class="hidden">
+                <div id="preset-list" style="max-height: 300px; overflow-y: auto;">
+                    <!-- سيتم حقن القوالب هنا -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden"></div>
+
+    <script>
+        // استخدام الكائنات العالمية المحملة من api.js
+
+        
+        window.switchDesignerTab = (tab, btn) => {
+            const btns = document.querySelectorAll('#designer-tabs button');
+            btns.forEach(b => b.style.borderBottomColor = 'transparent');
+            btn.style.borderBottomColor = 'var(--primary)';
+            
+            // Logic to hide/show logo vs text props
+            const textProps = document.getElementById('prop-text').parentElement;
+            const sizeProps = document.getElementById('prop-size').parentElement;
+            const colorProps = document.getElementById('prop-color').parentElement;
+            
+            if(tab === 'logo') {
+                textProps.style.display = 'none';
+                colorProps.style.display = 'none';
+                // logos usually still use size (width/height)
+            } else {
+                textProps.style.display = 'block';
+                colorProps.style.display = 'block';
+            }
+        };
+
+        
+        window.uploadSmartMergeDB = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (!confirm("هل أنت متأكد من بدء عملية الدمج الذكي؟ قد تستغرق بعض الوقت بناءً على حجم الداتا بيز.")) return;
+            
+            const formData = new FormData();
+            formData.append("file", file);
+            
+            showToast("جاري تحليل ودمج البيانات، يرجى الانتظار...", "info", 5000);
+            try {
+                const res = await window.apiCall("/api/admin-tools/merge-db", {
+                    method: "POST",
+                    body: formData
+                });
+                alert(`✅ اكتمل الدمج بنجاح!
+الملخص:
+` + JSON.stringify(res.summary, null, 2));
+            } catch(err) {
+                showToast("خطأ أثناء الدمج: " + err.message, "error", 5000);
+            }
+            e.target.value = "";
+        };
+
+        // 1. التحقق من الصلاحية
+        if (!requireAuth(true)) {
+            // سيتم التوجيه تلقائياً لو مش Admin
+        }
+
+        // الحالة العامة
+        let materials = [];
+
+        // عند التحميل
+        window.onload = () => {
+            const user = getCurrentUser();
+            if (user) {
+                const nameEl = document.getElementById("admin-name");
+                if (nameEl) nameEl.textContent = user.full_name;
+                const sideAdmin = document.getElementById("sidebar-admin-name");
+                if (sideAdmin) sideAdmin.textContent = user.full_name;
+            }
+            
+            // تحديث التاريخ الحالي بالعربية
+            try {
+                const dateEl = document.getElementById("admin-current-date");
+                if (dateEl) {
+                    const now = new Date();
+                    dateEl.textContent = now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                }
+            } catch(e) {}
+
+            loadDashboard();
+            checkPendingJobs(); // ← التحقق من وجود وظائف معلقة
+        };
+
+        // ===== UI Helpers =====
+        window.switchPanel = (panelId, ev) => {
+            if (ev && ev.preventDefault) ev.preventDefault();
+
+            document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+            document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+
+            const panel = document.getElementById(`panel-${panelId}`);
+            if (panel) panel.classList.add("active");
+
+            // Safe activation of nav item
+            const currentEv = ev || window.event;
+            if (currentEv && currentEv.currentTarget && currentEv.currentTarget.classList) {
+                currentEv.currentTarget.classList.add("active");
+            } else {
+                document.querySelectorAll(".nav-item").forEach(item => {
+                    const attr = item.getAttribute("onclick") || "";
+                    if (attr.includes(`'${panelId}'`)) {
+                        item.classList.add("active");
+                    }
+                });
+            }
+
+            const titles = { 
+                dashboard: "نظرة عامة", 
+                materials: "إدارة الملفات والمذكرات", 
+                tracking: "تتبع التسريبات",
+                users: "إدارة المستخدمين والأرصدة",
+                "system-tools": "أدوات النظام المتقدمة",
+                downloads: "سجل التحميلات والوظائف",
+                blacklist: "القائمة السوداء",
+                spending: "مستويات الولاء"
+            };
+            document.getElementById("panel-title").textContent = titles[panelId] || "لوحة التحكم";
+
+            if (panelId === "materials") loadMaterials();
+            if (panelId === "dashboard") loadDashboard();
+            if (panelId === "users") loadUsers();
+            if (panelId === "downloads") loadRecentJobsList();
+            if (panelId === "blacklist") loadBlacklist();
+            if (panelId === "spending") loadSpendingLevels();
+            if (panelId === "system-tools") loadSystemStats();
+        };
+
+        window.showToast = (msg, type = "info", duration = 3000) => {
+            const t = document.getElementById("toast");
+            if (!t) return;
+            t.className = `alert alert-${type}`;
+            t.innerHTML = `<span>${msg}</span>`;
+            t.classList.remove("hidden");
+            
+            // Clear existing timeout if any to prevent overlapping
+            if (window._toastTimeout) clearTimeout(window._toastTimeout);
+            window._toastTimeout = setTimeout(() => t.classList.add("hidden"), duration);
+        };
+
+        window.openModal = (id) => document.getElementById(id).classList.add("show");
+        window.closeModal = (id) => document.getElementById(id).classList.remove("show");
+
+        // ── متغيرات الرسوم البيانية (Chart Instances) ──
+        let revenueChart = null;
+        let usersChart = null;
+
+        // ===== Dashboard Logic =====
+        async function loadDashboard() {
+            try {
+                const stats = await statsAPI.getDashboard();
+                
+                // 1. تحديث الأرقام السريعة (Summary Cards)
+                if (document.getElementById("stat-total-materials")) {
+                    document.getElementById("stat-total-materials").textContent = stats.summary.total_materials || 0;
+                }
+                if (document.getElementById("stat-published-materials")) {
+                    document.getElementById("stat-published-materials").textContent = stats.summary.published_materials !== undefined ? stats.summary.published_materials : (stats.summary.total_materials || 0);
+                }
+                if (document.getElementById("stat-avg-price")) {
+                    document.getElementById("stat-avg-price").textContent = stats.summary.avg_price !== undefined ? `${stats.summary.avg_price} كوينز` : `20 كوينز`;
+                }
+                if (document.getElementById("stat-total-users")) {
+                    document.getElementById("stat-total-users").textContent = stats.summary.total_users || 0;
+                }
+                if (document.getElementById("stat-total-revenue")) {
+                    document.getElementById("stat-total-revenue").textContent = `${(stats.summary.total_revenue || 0).toLocaleString()} ج.م`;
+                }
+                
+                // 2. تحديث قائمة الأكثر مبيعاً
+                const topList = document.getElementById("top-selling-list");
+                topList.innerHTML = stats.top_selling.length > 0 
+                    ? stats.top_selling.map((m, i) => `
+                        <div class="flex-between p-1" style="border-bottom: 1px solid rgba(255,255,255,0.05)">
+                            <div class="flex gap-2 align-center">
+                                <span class="badge" style="background:rgba(255,255,255,0.05); width:24px; height:24px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:50%">${i+1}</span>
+                                <span style="font-size:13px; font-weight:600">${m.title}</span>
+                            </div>
+                            <span class="badge badge-success">${m.sales} مبيعات</span>
+                        </div>
+                    `).join('')
+                    : '<p class="text-muted text-center p-2">لا توجد مبيعات حالياً</p>';
+
+                // 3. رسم الرسوم البيانية (Charts)
+                renderRevenueChart(stats.charts.revenue);
+                renderUsersChart(stats.charts.users);
+
+            } catch (err) {
+                console.error("Dashboard Stats Error:", err);
+            }
+        }
+
+        function renderRevenueChart(data) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            if (revenueChart) revenueChart.destroy();
+            
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.date),
+                    datasets: [{
+                        label: 'الأرباح اليومية (ج.م)',
+                        data: data.map(d => d.amount),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16,185,129,0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderUsersChart(data) {
+            const ctx = document.getElementById('usersChart').getContext('2d');
+            if (usersChart) usersChart.destroy();
+            
+            usersChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(d => d.date),
+                    datasets: [{
+                        label: 'المستخدمين الجدد',
+                        data: data.map(d => d.count),
+                        backgroundColor: '#38bdf8',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // ===== Materials Logic =====
+        async function loadMaterials() {
+            const tbody = document.getElementById("materials-tbody");
+            const loader = document.getElementById("table-loader");
+
+            tbody.innerHTML = "";
+            loader.classList.remove("hidden");
+
+            try {
+                const data = await materialsAPI.listAll();
+                materials = data.items;
+
+                materials.forEach(m => {
+                    const tr = document.createElement("tr");
+                    tr.className = "fade-in";
+                    tr.innerHTML = `
+            <td>
+              <div class="material-title">
+                <span class="material-icon">📄</span>
+                <div>
+                  <div>${m.title}</div>
+                  <div class="text-muted" style="font-size:11px">#${m.id}</div>
+                </div>
+              </div>
+            </td>
+            <!-- <td>
+              <div>${parseFloat(m.price).toFixed(2)} ج.م</div>
+            </td> -->
+            <td>
+              <div style="color:#f59e0b; font-weight:700"><img src='/frontend/assets/zpact_coin.png' class='coin-icon' alt='Z'> ${m.price_coins}</div>
+            </td>
+            <td>${m.total_pages || "—"}</td>
+            <td>
+              <span class="badge ${m.is_published ? 'badge-success' : 'badge-muted'}">
+                ${m.is_published ? 'منشور' : 'مسودة'}
+              </span>
+            </td>
+            <td>
+              <div class="actions">
+                <button type="button" class="btn btn-sm btn-ghost" onclick="togglePublish(${m.id}, ${m.is_published})" title="تغيير حالة النشر">
+                  ${m.is_published ? '👁️‍🗨️' : '👁️'}
+                </button>
+                <button type="button" class="btn btn-sm btn-ghost" onclick="openDesigner(${m.id})" title="تنسيق الأختام">
+                  🎨
+                </button>
+                <button type="button" class="btn btn-sm btn-ghost" onclick="downloadOriginal(${m.id})" title="تحميل الملف الأصلي">
+                  📥
+                </button>
+                <button type="button" class="btn btn-sm btn-ghost" onclick="editMaterial(${m.id})" title="تعديل">
+                  ✏️
+                </button>
+                <button type="button" class="btn btn-sm btn-ghost text-danger" onclick="deleteMaterial(${m.id})" title="حذف">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                loader.classList.add("hidden");
+            }
+        }
+
+        window.openUploadModal = () => {
+            document.getElementById("m-modal-title").textContent = "رفع ملف جديد";
+            document.getElementById("material-form").reset();
+            document.getElementById("m-id").value = "";
+            document.getElementById("file-field").classList.remove("hidden");
+            document.getElementById("material-modal").classList.add("show");
+        };
+
+        window.editMaterial = (id) => {
+            const m = materials.find(x => x.id === id);
+            if (!m) return;
+            document.getElementById("m-modal-title").textContent = "تعديل بيانات الملف";
+            document.getElementById("m-id").value = m.id;
+            document.getElementById("m-title").value = m.title;
+            document.getElementById("m-tag").value = m.tag || "";
+            document.getElementById("m-desc").value = m.description || "";
+            document.getElementById("m-price").value = m.price;
+            document.getElementById("m-price-coins").value = m.price_coins;
+            document.getElementById("m-compress").checked = m.compression_enabled !== false;
+            document.getElementById("file-field").classList.add("hidden");
+            document.getElementById("material-modal").classList.add("show");
+        };
+
+        window.downloadOriginal = async (id) => {
+            const token = localStorage.getItem("access_token");
+            try {
+                // استخدام Fetch بدلاً من window.location مباشرة للتمكن من إرسال الـ Header
+                const res = await fetch(`${BASE_URL}/materials/${id}/designer-file`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("فشل تحميل الملف. ربما انتهت صلاحية الجلسة.");
+                
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Original_Material_${id}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        window.handleMaterialSubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById("m-id").value;
+            const btn = document.getElementById("m-submit-btn");
+            btn.classList.add("btn-loading");
+
+            try {
+                if (id) {
+                    await materialsAPI.update(id, {
+                        title: document.getElementById("m-title").value,
+                        tag: document.getElementById("m-tag").value || null,
+                        description: document.getElementById("m-desc").value,
+                        price: document.getElementById("m-price").value,
+                        price_coins: document.getElementById("m-price-coins").value,
+                        compression_enabled: document.getElementById("m-compress").checked
+                    });
+                    showToast("تم تحديث البيانات بنجاح", "success");
+                } else {
+                    const formData = new FormData();
+                    formData.append("title", document.getElementById("m-title").value);
+                    if (document.getElementById("m-tag").value) {
+                        formData.append("tag", document.getElementById("m-tag").value);
+                    }
+                    formData.append("description", document.getElementById("m-desc").value);
+                    formData.append("price", document.getElementById("m-price").value);
+                    formData.append("price_coins", document.getElementById("m-price-coins").value);
+                    formData.append("pdf_file", document.getElementById("m-file").files[0]);
+                    formData.append("compression_enabled", document.getElementById("m-compress").checked);
+
+                    await materialsAPI.upload(formData);
+                    showToast("تم رفع الملف بنجاح", "success");
+                }
+                closeModal('material-modal');
+                loadMaterials();
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btn.classList.remove("btn-loading");
+            }
+        };
+
+        window.deleteMaterial = async (id) => {
+            if (!confirm("هل أنت متأكد من حذف هذا الملف؟ لا يمكن التراجع عن هذه الخطوة.")) return;
+            try {
+                await materialsAPI.delete(id);
+                showToast("تم حذف الملف", "success");
+                loadMaterials();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        window.togglePublish = async (id, currentStatus) => {
+            try {
+                await materialsAPI.update(id, { is_published: !currentStatus });
+                showToast(currentStatus ? "تم إلغاء النشر" : "تم نشر الملف بنجاح", "success");
+                loadMaterials();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        // ===== Users & Coins Logic =====
+        async function loadUsers() {
+            const tbody = document.getElementById("users-tbody");
+            const query = document.getElementById("user-search").value.trim();
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner" style="margin:20px auto"></div></td></tr>';
+
+            try {
+                const token = localStorage.getItem("access_token");
+                const url = query 
+                    ? `${BASE_URL}/coins/admin/users?q=${encodeURIComponent(query)}`
+                    : `${BASE_URL}/coins/admin/users`;
+                
+                const res = await fetch(url, { headers: { "Authorization": `Bearer ${token}` } });
+                const data = await res.json();
+                
+                tbody.innerHTML = "";
+                data.items.forEach(u => {
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td style="font-size:11px; color:var(--text-muted)">#${u.id}</td>
+                        <td><strong>${u.full_name}</strong> ${u.role === 'admin' ? '<span class="badge badge-primary">مسؤول</span>' : ''}</td>
+                        <td>${u.email}</td>
+                        <td><span style="font-weight:800; color:#f59e0b"><img src='/frontend/assets/zpact_coin.png' class='coin-icon' alt='Z'> ${u.coins}</span></td>
+                        <td class="text-muted">${new Date(u.created_at).toLocaleDateString("ar-EG")}</td>
+                        <td>
+                            <span class="badge ${u.is_active ? 'badge-success' : 'badge-danger'}">
+                                ${u.is_active ? 'نشط' : 'محظور'}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn btn-sm btn-ghost" onclick="showUserActivity(${u.id})" title="عرض النشاط">🔍</button>
+                                <button class="btn btn-sm btn-primary" onclick="openRechargeModal(${u.id})" title="شحن رصيد">💰</button>
+                                <button class="btn btn-sm btn-ghost" onclick="loadAuditHistory(${u.id})" title="سجل التعديلات">📋</button>
+                                <button class="btn btn-sm btn-ghost" onclick="showUserDevices(${u.id})" title="الأجهزة المسجلة">📱</button>
+                                ${window.getCurrentUser().id === 1 ? `
+                                    <button class="btn btn-sm ${u.is_active ? 'btn-danger' : 'btn-success'}" onclick="toggleUserBan(${u.id})" title="${u.is_active ? 'حظر' : 'إلغاء حظر'}">
+                                        ${u.is_active ? '🚫' : '✅'}
+                                    </button>
+                                    <button class="btn btn-sm btn-ghost" onclick="resetUserPassword(${u.id})" title="تغيير كلمة المرور">🔑</button>
+                                    ${u.role !== 'admin' ? `
+                                        <button class="btn btn-sm btn-ghost" style="border:1px solid var(--primary); color:var(--primary)" onclick="promoteToAdmin(${u.id})" title="ترقية لمدير">🛡️</button>
+                                    ` : ''}
+                                ` : ''}
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        window.showUserActivity = async (userId) => {
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/layouts/users/${userId}/activity`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "فشل جلب البيانات");
+
+                userHistoryData = data.history;
+                trackedUserId = data.user_details.id;
+
+                // Open tracking panel view with user data
+                document.getElementById("res-user-id").textContent = data.user_details.id;
+                document.getElementById("res-user-name").textContent = data.user_details.name;
+                document.getElementById("res-user-email").textContent = data.user_details.email;
+                
+                // Update Ban Button Status
+                const banBtn = document.getElementById("ban-btn-leak");
+                if (data.user_details.is_active === false) {
+                    banBtn.innerHTML = "✅ هذا المستخدم محظور بالفعل";
+                    banBtn.className = "btn btn-sm btn-success btn-full mt-2";
+                    banBtn.onclick = () => toggleUserBan(trackedUserId, true);
+                } else {
+                    banBtn.innerHTML = "🚫 حظر هذا المستخدم فوراً";
+                    banBtn.className = "btn btn-sm btn-danger btn-full mt-2";
+                    banBtn.onclick = handleBanUserFromLeak;
+                }
+
+                document.getElementById("res-history-count").textContent = data.history.length;
+                const historyHtml = data.history.map(h => `
+                    <div onclick="showPurchaseDetails(${h.id})" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border); cursor:pointer; transition:0.2s; border-radius:6px; margin-bottom:4px;" class="history-row">
+                        <div style="flex:1">
+                            <div style="font-weight:600">${h.material_name}</div>
+                            <div style="font-size:11px; opacity:0.6">${new Date(h.purchased_at).toLocaleDateString('ar-EG')}</div>
+                        </div>
+                        <div style="color:var(--primary); font-size:12px; align-self:center">بيانات الختم ←</div>
+                    </div>
+                `).join("");
+                document.getElementById("res-history-list").innerHTML = historyHtml || '<div class="text-muted p-2">لا يوجد مشتريات</div>';
+
+                switchPanel('tracking');
+                document.getElementById("leak-results").classList.remove("hidden");
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        window.resetUserPassword = async (userId) => {
+            const newPass = prompt("أدخل كلمة المرور الجديدة:");
+            if (!newPass) return;
+            try {
+                await window.adminAPI.resetPassword(userId, newPass);
+                showToast("تم تغيير كلمة المرور بنجاح", "success");
+            } catch (err) { showToast(err.message, "error"); }
+        };
+
+        window.loadAuditHistory = async (userId) => {
+            try {
+                const logs = await window.adminAPI.getAudit(userId);
+                const list = document.getElementById("audit-list");
+                if (logs.length === 0) {
+                    list.innerHTML = "<p class='text-center p-3 text-muted'>لا يوجد سجلات لهذا المستخدم</p>";
+                } else {
+                    list.innerHTML = logs.map(l => `
+                        <div style="padding:10px;border-bottom:1px solid var(--border)">
+                            <div style="font-weight:bold">${l.action}</div>
+                            <div style="font-size:12px;color:var(--text-muted)">${l.details} - ${new Date(l.created_at).toLocaleString('ar-EG')}</div>
+                        </div>
+                    `).join("");
+                }
+                openModal('audit-modal');
+            } catch (err) { showToast(err.message, "error"); }
+        };
+
+        async function loadSpendingLevels() {
+            const tbody = document.getElementById("spending-tbody");
+            try {
+                const levels = await window.adminAPI.getSpendingLevels();
+                tbody.innerHTML = levels.map(l => `
+                    <tr>
+                        <td>${l.threshold} كوينز</td>
+                        <td>${l.reward_coins} كوينز</td>
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteSpendingLevel(${l.id})">حذف</button></td>
+                    </tr>
+                `).join("");
+            } catch (e) { showToast(e.message, "error"); }
+        }
+        window.loadSpendingLevels = loadSpendingLevels;
+
+        window.openSpendingModal = () => openModal("spending-modal");
+        
+        window.handleSpendingSubmit = async () => {
+            const threshold = document.getElementById("spending-threshold").value;
+            const reward = document.getElementById("spending-reward").value;
+            if (!threshold || !reward) return;
+            try {
+                await window.adminAPI.createSpendingLevel({ threshold: parseFloat(threshold), reward_coins: parseFloat(reward) });
+                showToast("تم حفظ المستوى", "success");
+                closeModal("spending-modal");
+                loadSpendingLevels();
+            } catch (err) { showToast(err.message, "error"); }
+        };
+
+        window.deleteSpendingLevel = async (id) => {
+            if (!confirm("تأكيد الحذف؟")) return;
+            try {
+                await window.adminAPI.deleteSpendingLevel(id);
+                showToast("تم الحذف", "success");
+                loadSpendingLevels();
+            } catch (err) { showToast(err.message, "error"); }
+        };
+
+        // ===== Blacklist Logic =====
+        async function loadBlacklist() {
+            const tbody = document.getElementById("blacklist-tbody");
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner"></div></td></tr>';
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/coins/admin/blacklist`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+                tbody.innerHTML = "";
+                data.forEach(item => {
+                    const typeLabel = { phone: "📞 رقم هاتف", name: "👤 اسم", text: "📝 نص/علامة" }[item.type] || item.type;
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td>${typeLabel}</td>
+                        <td><code style="color:var(--primary); font-weight:700">${item.value}</code></td>
+                        <td>${item.reason || "—"}</td>
+                        <td class="text-muted">${new Date(item.created_at).toLocaleDateString("ar-EG")}</td>
+                        <td>
+                            <button class="btn btn-sm btn-ghost text-danger" onclick="handleRemoveBlacklist(${item.id})">🗑️ فك الحظر</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        window.handleAddBlacklist = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById("bl-submit-btn");
+            const type = document.getElementById("bl-type").value;
+            const value = document.getElementById("bl-value").value.trim();
+            const reason = document.getElementById("bl-reason").value.trim();
+
+            if (!value) return;
+            btn.disabled = true;
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/coins/admin/blacklist?val_type=${type}&value=${encodeURIComponent(value)}&reason=${encodeURIComponent(reason)}`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || "فشل الإضافة");
+                }
+                showToast("تم إضافة البيان للقائمة السوداء", "success");
+                closeModal('blacklist-modal');
+                loadBlacklist();
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btn.disabled = false;
+            }
+        };
+
+        window.handleRemoveBlacklist = async (id) => {
+            if (!confirm("هل أنت متأكد من فك الحظر عن هذا البيان؟")) return;
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/coins/admin/blacklist/${id}`, {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("فشل فك الحظر");
+                showToast("تم فك الحظر بنجاح", "success");
+                loadBlacklist();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        window.openRechargeModal = (userId) => {
+            document.getElementById("recharge-user-id").value = userId;
+            document.getElementById("recharge-amount").value = "";
+            document.getElementById("recharge-desc").value = "";
+            document.getElementById("recharge-modal").classList.add("show");
+        };
+
+        window.handleRechargeSubmit = async (e) => {
+            e.preventDefault();
+            const userId = document.getElementById("recharge-user-id").value;
+            const amount = document.getElementById("recharge-amount").value;
+            const desc = document.getElementById("recharge-desc").value;
+
+            try {
+                await coinsAPI.recharge(userId, amount, desc);
+                showToast("تم شحن الرصيد بنجاح", "success");
+                closeModal('recharge-modal');
+                loadUsers();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        // ===== Downloads Logic =====
+        async function loadRecentJobsList() {
+            const grid = document.getElementById("downloads-grid");
+            grid.innerHTML = '<div class="spinner" style="margin:20px auto"></div>';
+            try {
+                const jobs = await jobsAPI.recent();
+                grid.innerHTML = "";
+                if (jobs.length === 0) {
+                    grid.innerHTML = '<p class="text-center p-3 text-muted" style="grid-column: 1/-1">لا توجد ملفات جاهزة للتحميل حالياً.</p>';
+                    return;
+                }
+                jobs.forEach(job => {
+                    const card = document.createElement("div");
+                    card.className = "material-card fade-in";
+                    card.innerHTML = `
+                        <div class="card-body">
+                            <div class="flex-between mb-1">
+                                <span class="badge ${job.status === 'done' ? 'badge-success' : (job.status === 'failed' ? 'badge-danger' : 'badge-primary')}">
+                                    ${job.status === 'done' ? 'جاهز' : (job.status === 'failed' ? 'فشل' : 'جاري العمل')}
+                                </span>
+                                <small class="text-muted">${new Date(job.created_at).toLocaleTimeString("ar-EG")}</small>
+                            </div>
+                            <div style="font-weight:700; margin-bottom:10px">${job.label || 'ملف مجهول'}</div>
+                            ${job.status === 'done' ? `
+                                <a href="${jobsAPI.downloadUrl(job.job_id)}" target="_blank" class="btn btn-primary btn-sm btn-full">📥 تحميل الآن</a>
+                            ` : `
+                                <div class="spinner spinner-sm"></div>
+                            `}
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                showToast("فشل تحميل القائمة: " + err.message, "error");
+            }
+        }
+
+        class StampDesigner {
+            constructor() {
+                this.canvas = null;
+                this.pdf = null;
+                this.currentPage = 1;
+                this.totalPages = 1;
+                this.scale = 1.0;
+                this.lastScale = 1.0;
+                this.materialId = null;
+                this.objects = []; 
+            }
+
+
+
+            async init(materialId, layoutType = 'default_text') {
+                this.materialId = materialId;
+                this.layoutType = layoutType;
+                this.objects = [];
+                this.currentPage = 1;
+
+                const overlay = document.getElementById('layout-modal');
+                overlay.classList.add('show');
+                document.getElementById('designer-title').textContent = 'جارِ تحميل الملف...';
+
+                // إخفاء الأدوات غير المسموحة بناءً على نوع التنسيق المختار
+                const isLogoType = layoutType === 'default_logo';
+                
+                const wmDivider = document.getElementById('watermark-text-tool-divider');
+                const wmTitle = document.getElementById('watermark-text-tool-title');
+                const wmBtn = document.getElementById('add-watermark-btn');
+                if (wmDivider) wmDivider.style.display = isLogoType ? 'none' : 'block';
+                if (wmTitle) wmTitle.style.display = isLogoType ? 'none' : 'block';
+                if (wmBtn) wmBtn.style.display = isLogoType ? 'none' : 'block';
+
+                const logoDivider = document.getElementById('logo-tool-divider');
+                const logoTitle = document.getElementById('logo-tool-title');
+                const logoBtn = document.getElementById('add-logo-btn');
+                const logoUpload = document.getElementById('logo-upload-container');
+                if (logoDivider) logoDivider.style.display = isLogoType ? 'block' : 'none';
+                if (logoTitle) logoTitle.style.display = isLogoType ? 'block' : 'none';
+                if (logoBtn) logoBtn.style.display = isLogoType ? 'block' : 'none';
+                if (logoUpload) logoUpload.style.display = isLogoType ? 'block' : 'none';
+
+                try {
+                    // 1. Initialize Fabric Canvas if not already done
+                    if (!this.isInitialized) {
+                        this.canvas = new fabric.Canvas('designer-canvas', {
+                            backgroundColor: '#fff',
+                            preserveObjectStacking: true,
+                            uniScaleTransform: true
+                        });
+                        this.setupEvents();
+                        this.isInitialized = true;
+                    }
+
+                    // 2. Load PDF (Base64 JSON Strategy - The most stable for local dev)
+                    const token = localStorage.getItem('access_token');
+                    const pdfUrl = `${BASE_URL}/materials/${materialId}/designer-base64`;
+
+                    const response = await fetch(pdfUrl, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!response.ok) throw new Error(`فشل جلب البيانات (${response.status})`);
+
+                    const data = await response.json();
+                    if (!data.pdf_64) throw new Error("لم يتم استلام بيانات الملف بشكل صحيح");
+
+                    // Convert Base64 to Uint8Array
+                    const binaryString = atob(data.pdf_64);
+                    const uint8Array = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        uint8Array[i] = binaryString.charCodeAt(i);
+                    }
+
+                    const loadingTask = pdfjsLib.getDocument({
+                        data: uint8Array,
+                        cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/cmaps/',
+                        cMapPacked: true,
+                        standardFontDataUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/standard_fonts/',
+                    });
+                    this.pdf = await loadingTask.promise;
+                    this.totalPages = this.pdf.numPages;
+                    // Reset IDs to standard ones
+                    document.getElementById('total-pages').textContent = this.totalPages;
+
+                    // 3. Load Existing Layout
+                    await this.loadExistingLayout();
+
+                    // 4. Render First Page
+                    await this.renderPage(1);
+
+                    const layoutLabel = layoutType === 'default_logo' ? 'لوجو العلامة المائية' : 'العلامة المائية النصية';
+                    document.getElementById('designer-title').textContent = `تنسيق أختام المادة #${materialId} — (${layoutLabel})`;
+                } catch (err) {
+                    console.error("DEBUG: StampDesigner Init Error:", err);
+                    showToast("فشل تحميل المحرر: " + err.message, "error");
+                    this.close();
+                }
+            }
+
+            async loadExistingLayout() {
+                try {
+                    const layouts = await layoutsAPI.list(this.materialId);
+                    if (layouts && layouts.length > 0) {
+                        const targetLayout = layouts.find(l => l.layout_type === this.layoutType) || layouts.find(l => l.layout_type === 'default') || layouts[0];
+                        if (targetLayout) {
+                            this.objects = targetLayout.stamp_elements.map(el => ({
+                                ...el,
+                                id: el.id || Math.random().toString(36).substr(2, 9),
+                                displayText: this.getStampLabel(el.type)
+                            }));
+                            showToast("تم تحميل التنسيق المحفوظ بنجاح", "info");
+                        }
+                    }
+                } catch (err) {
+                    console.warn("No existing layout found or error loading it.");
+                    // We don't show error toast here because it might just be the first time designing
+                }
+            }
+
+            getStampLabel(type) {
+                const labels = {
+                    name:      "أحمد محمد علي",
+                    phone:     "01012345678",
+                    watermark: "نسخة خاصة",
+                    logo:      "لوجو / شعار",
+                    logo_watermark: "لوجو مائي",
+                    doc_name:  "اسم المذكرة"
+                };
+                return labels[type] || "ختم";
+            }
+
+            getStampColor(type) {
+                const colors = {
+                    name:      { bg: 'rgba(239,246,255,0.9)', border: '#3b82f6' },
+                    phone:     { bg: 'rgba(240,253,244,0.9)', border: '#22c55e' },
+                    watermark: { bg: 'rgba(250,250,250,0.9)', border: '#94a3b8' },
+                    logo:      { bg: 'rgba(230,230,250,0.9)', border: '#818cf8' },
+                    logo_watermark: { bg: 'rgba(230,230,250,0.9)', border: '#818cf8' },
+                    doc_name:  { bg: 'rgba(245,243,255,0.9)', border: '#8b5cf6' },
+                };
+                return colors[type] || { bg: 'rgba(255,255,255,0.9)', border: '#6366f1' };
+            }
+
+            async renderPage(pageNum) {
+                // 1. Sync current canvas state BACK to model using the scale they were rendered with
+                this.syncCanvasToModel();
+
+                this.currentPage = pageNum;
+                // Update tracker for the new scale we are about to use
+                this.lastScale = this.scale;
+
+                document.getElementById('current-page').textContent = pageNum;
+                document.getElementById('prev-page').disabled = (pageNum <= 1);
+                document.getElementById('next-page').disabled = (pageNum >= this.totalPages);
+
+                const page = await this.pdf.getPage(pageNum);
+                // Standardize scale: Use 1.0 as the base for 100% zoom
+                const viewport = page.getViewport({ scale: this.scale });
+
+                // Match canvas size to PDF page
+                this.canvas.setDimensions({ width: viewport.width, height: viewport.height });
+
+                // Render PDF page for background
+                const tempCanvas = document.createElement('canvas');
+                const context = tempCanvas.getContext('2d');
+                tempCanvas.width = viewport.width;
+                tempCanvas.height = viewport.height;
+                await page.render({ canvasContext: context, viewport }).promise;
+
+                const bgImg = await new Promise(resolve => {
+                    fabric.Image.fromURL(tempCanvas.toDataURL(), (img) => resolve(img));
+                });
+
+                // 2. Clear canvas
+                this.canvas.clear();
+                this.canvas.setBackgroundImage(bgImg, this.canvas.renderAll.bind(this.canvas));
+
+                // 3. Redraw intended objects for this page (Local + Global)
+                this.objects.forEach(data => {
+                    if (data.page === pageNum) {
+                        this.drawObjectOnCanvas(data);
+                    } else if (data.page === 0) {
+                        // Check exclusions
+                        const exclusions = data.excluded_pages || [];
+                        if (!exclusions.includes(pageNum)) {
+                            this.drawObjectOnCanvas(data);
+                        }
+                    }
+                });
+                // تحديث الليبلز بعد رسم الصفحة
+                this.updateStampLabels();
+            }
+
+            syncCanvasToModel() {
+                if (!this.canvas || !this.isInitialized) return;
+                const canvasObjects = this.canvas.getObjects();
+
+                canvasObjects.forEach(obj => {
+                    if (!obj.id) return;
+                    const modelItem = this.objects.find(o => o.id === obj.id);
+                    if (modelItem) {
+                        // الحسابات الأساسية للنسب المئوية
+                        let x_pct = (obj.left / this.canvas.width) * 100;
+                        let y_pct = (obj.top / this.canvas.height) * 100;
+
+                        // --- [الفحص الذكي للحدود - Smart Detector] ---
+                        // يتم تجاهل العلامة المائية لأنها تتقاطع مع الشاشة بطبيعتها
+                        if (obj.stampType !== 'watermark') {
+                            const textLabel = obj.customText || this.getStampLabel(obj.stampType);
+                            const estimatedW = textLabel.length * (modelItem.font_size * 0.7); 
+                            const halfW_pct = ((estimatedW / 2) / this.canvas.width) * 100;
+                            
+                            if (x_pct - halfW_pct < 5) {
+                                x_pct = 5 + halfW_pct;
+                            }
+                            if (x_pct + halfW_pct > 95) {
+                                x_pct = 95 - halfW_pct;
+                            }
+                        }
+
+                        // تقريب الرقم لأقرب منزلة عشرية واحدة لمنع انزياح الإحداثيات عند تقليب الصفحات
+                        modelItem.x_pct = Math.round(x_pct * 10) / 10;
+                        modelItem.y_pct = Math.round(y_pct * 10) / 10;
+                        
+                        // تحديث الحجم (بقسمة الحجم الحالي على الزوم للحصول على الحجم الأصلي)
+                        if (obj.scaleY !== 1) {
+                            // الحجم الموديل هو الحجم عند زوم 1.0
+                            // لذا لو غيرنا الحجم وهو في زوم 1.5، نقسم على 1.5
+                            modelItem.font_size = (modelItem.font_size * obj.scaleY);
+                            obj.set({ scaleX: 1, scaleY: 1, height: obj.height * obj.scaleY, width: obj.width * obj.scaleX });
+                        }
+
+                        modelItem.opacity  = obj.opacity;
+                        modelItem.rotation = Math.round(obj.angle);
+                        modelItem.page     = obj.targetPage;
+                        modelItem.custom_text    = obj.customText;
+                        modelItem.excluded_pages = obj.excludedPages || [];
+                        modelItem.pattern  = obj.pattern || "single";
+                        modelItem.z_index_mode = obj.underContent ? 'background' : 'foreground';
+
+                        // تحديث مكان العنصر على الكانفاس ليعكس التغيير الذكي
+                        obj.set({
+                            left: (modelItem.x_pct / 100) * this.canvas.width,
+                            top:  (modelItem.y_pct / 100) * this.canvas.height
+                        });
+                    }
+                });
+                this.canvas.renderAll();
+                this.updateStampLabels();
+            }
+
+            drawObjectOnCanvas(data) {
+                const c = this.getStampColor(data.type);
+                const activeColor = data.color || c.border;
+                
+                // حساب الحجم: لو النوع watermark أو logo_watermark بنعتبره نسبة (كل 10 وحدات = 1%)، غير كده بكسل
+                let fontSizePx;
+                if (data.type === 'watermark' || data.type === 'logo_watermark' || data.type === 'logo') {
+                    fontSizePx = (data.font_size / 1000) * this.canvas.width;
+                } else {
+                    fontSizePx = data.font_size * this.scale;
+                }
+
+                const baseHeight = fontSizePx * 1.6;
+                const isLogo = data.type === 'logo_watermark' || data.type === 'logo';
+
+                const rect = new fabric.Rect({
+                    left:    (data.x_pct / 100) * this.canvas.width,
+                    top:     (data.y_pct / 100) * this.canvas.height,
+                    width:   isLogo ? (fontSizePx * 6) : (fontSizePx * 6), 
+                    height:  isLogo ? (fontSizePx * 6) : baseHeight,
+                    fill:    c.bg,
+                    stroke:  activeColor,
+                    strokeWidth: 2,
+                    rx: isLogo ? 12 : 6, ry: isLogo ? 12 : 6,
+                    opacity:    data.opacity,
+                    angle:      data.rotation,
+                    originX:    'center',
+                    originY:    'center',
+                    borderColor: data.page === 0 ? '#3b82f6' : '#10b981',
+                    borderDashArray: data.page === 0 ? [5, 5] : null
+                });
+
+                rect.id           = data.id || Math.random().toString(36).substr(2, 9);
+                data.id           = rect.id;
+                rect.stampType    = data.type;
+                rect.targetPage   = data.page;
+                rect.customText   = data.custom_text || "";
+                rect.excludedPages = data.excluded_pages || [];
+                rect.pattern      = data.pattern || "single";
+                let underContent = false;
+                if (data.z_index_mode) {
+                    underContent = (data.z_index_mode === 'background');
+                } else {
+                    underContent = (data.type === 'watermark' || data.type === 'logo_watermark');
+                }
+                rect.underContent = underContent;
+
+                this.canvas.add(rect);
+                this.updateStampLabels();
+            }
+
+            // ---- مزامنة labels الـ HTML مع مواضع الـ rects ----
+            
+    async uploadLogo(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+            const res = await window.usersAPI.uploadWatermarkLogo(formData);
+            if (res.message) alert('تم رفع اللوجو بنجاح! سيتم استخدامه عند ختم الملفات بختم اللوجو.');
+            else alert('حدث خطأ أثناء رفع اللوجو');
+        } catch (err) {
+            console.error(err);
+            alert('فشل الرفع');
+        }
+        event.target.value = '';
+    }
+
+    updateStampLabels() {
+                const overlay = document.getElementById('stamp-labels-overlay');
+                if (!overlay || !this.canvas) return;
+                overlay.innerHTML = '';
+
+                this.canvas.getObjects().forEach(obj => {
+                    if (!obj.stampType) return;
+
+                    // حساب المركز الحقيقي بعد الـ transform
+                    const center = obj.getCenterPoint();
+                    const labelText = obj.customText || this.getStampLabel(obj.stampType);
+                    const isGlobal  = (obj.targetPage === 0);
+
+                    const el = document.createElement('div');
+                    el.className = 'stamp-label-html' + (isGlobal ? ' global' : '');
+                    el.style.left    = center.x + 'px';
+                    el.style.top     = center.y + 'px';
+                    // حساب حجم الخط بناءً على الارتفاع الفعلي للمستطيل (بعد التكبير)
+                    const effectiveHeight = (obj.height * obj.scaleY);
+                    el.style.fontSize = Math.max(8, effectiveHeight * 0.55) + 'px';
+                    el.style.opacity = obj.opacity;
+                    el.style.transform = `translate(-50%, -50%) rotate(${obj.angle || 0}deg)`;
+                    el.style.borderColor = isGlobal ? '#3b82f6' : (obj.stroke || '#ff0000');
+                    el.style.color = obj.stroke || '#ff0000';
+                    el.textContent = labelText;
+                    overlay.appendChild(el);
+                });
+            }
+
+            addStamp(type) {
+                const actualType = type === 'logo' ? 'logo_watermark' : type;
+                const defaultData = {
+                    id: Math.random().toString(36).substr(2, 9),
+                    type: actualType,
+                    page: this.currentPage,
+                    x_pct: 50,
+                    y_pct: 50,
+                    font_size: actualType === 'watermark' ? 32 : (actualType === 'logo_watermark' ? 40 : 20),
+                    color: actualType === 'watermark' ? '#cccccc' : (actualType === 'logo_watermark' ? '#818cf8' : '#ff0000'),
+                    opacity: actualType === 'watermark' ? 0.3 : (actualType === 'logo_watermark' ? 0.15 : 0.6),
+                    rotation: actualType === 'watermark' ? -45 : 0,
+                    custom_text: "",
+                    excluded_pages: [],
+                    pattern: "single"
+                };
+                this.objects.push(defaultData);
+                this.drawObjectOnCanvas(defaultData);
+                this.canvas.setActiveObject(this.canvas.getObjects().slice(-1)[0]);
+            }
+
+            setupEvents() {
+                this.canvas.on('selection:created', (e) => this.updateSidebar(e.selected[0]));
+                this.canvas.on('selection:updated', (e) => this.updateSidebar(e.selected[0]));
+                this.canvas.on('selection:cleared', () => {
+                    document.getElementById('no-selection').classList.remove('hidden');
+                    document.getElementById('selection-props').classList.add('hidden');
+                    this.updateStampLabels();
+                });
+
+                const syncAll = (e) => {
+                    this.updateSidebar(e.target);
+                    this.updateStampLabels();
+                };
+
+                this.canvas.on('object:moving',  syncAll);
+                this.canvas.on('object:rotating', syncAll);
+                this.canvas.on('object:modified', () => {
+                    this.syncCanvasToModel();
+                    this.updateStampLabels();
+                });
+            }
+
+            updateSidebar(obj) {
+                document.getElementById('no-selection').classList.add('hidden');
+                document.getElementById('selection-props').classList.remove('hidden');
+
+                document.getElementById('prop-text').value   = obj.customText || "";
+                document.getElementById('prop-x').value      = ((obj.left / this.canvas.width) * 100).toFixed(1);
+                document.getElementById('prop-y').value      = ((obj.top / this.canvas.height) * 100).toFixed(1);
+                // الآن بنستخدم rect بدل text — font_size بيتمثيله بـ height الـ rect
+                const storedModel = this.objects.find(o => o.id === obj.id);
+                document.getElementById('prop-size').value   = storedModel ? storedModel.font_size : 20;
+                document.getElementById('prop-opacity').value = obj.opacity;
+                document.getElementById('prop-color').value  = obj.stroke || '#ff0000';
+                document.getElementById('prop-rotate').value = Math.round(obj.angle);
+
+                const isLogo = obj.stampType === 'logo_watermark' || obj.stampType === 'logo';
+                const isWatermark = obj.stampType === 'watermark' || isLogo;
+
+                // التبديل التلقائي للتبويب بناءً على نوع العنصر المحدد
+                const tabBtn = document.querySelectorAll('#designer-tabs button')[isLogo ? 1 : 0];
+                if (tabBtn) {
+                    window.switchDesignerTab(isLogo ? 'logo' : 'text', tabBtn);
+                }
+                const sizeLabel = document.getElementById('size-label');
+                if (sizeLabel) sizeLabel.textContent = isWatermark ? "الحجم (% من العرض)" : "الحجم (بكسل)";
+                document.getElementById('watermark-pattern-area').classList.toggle('hidden', !isWatermark);
+                if (isWatermark) {
+                    document.getElementById('prop-pattern').value = obj.pattern || "single";
+                }
+
+                const isGlobal = (obj.targetPage === 0);
+                document.getElementById('prop-global').checked = isGlobal;
+
+                const excArea = document.getElementById('exclusions-area');
+                if (isGlobal) {
+                    excArea.classList.remove('hidden');
+                    document.getElementById('prop-exclusions').value = (obj.excludedPages || []).join(', ');
+                } else {
+                    excArea.classList.add('hidden');
+                }
+
+                let underContent = false;
+                if (storedModel) {
+                    if (storedModel.z_index_mode) {
+                        underContent = (storedModel.z_index_mode === 'background');
+                    } else {
+                        underContent = (storedModel.type === 'watermark' || storedModel.type === 'logo_watermark');
+                    }
+                }
+                document.getElementById('prop-under-content').checked = underContent;
+            }
+
+            updateFromUI() {
+                const obj = this.canvas.getActiveObject();
+                if (!obj) return;
+
+                const text = document.getElementById('prop-text').value;
+                const x_pct = parseFloat(document.getElementById('prop-x').value);
+                const y_pct = parseFloat(document.getElementById('prop-y').value);
+                const size = parseInt(document.getElementById('prop-size').value);
+                const opacity = parseFloat(document.getElementById('prop-opacity').value);
+                const color = document.getElementById('prop-color').value;
+                const rotate = parseFloat(document.getElementById('prop-rotate').value);
+                const isGlobal = document.getElementById('prop-global').checked;
+                const isLogo = obj.stampType === 'logo_watermark' || obj.stampType === 'logo';
+                const isWatermark = obj.stampType === 'watermark' || isLogo;
+                const pattern = isWatermark ? document.getElementById('prop-pattern').value : "single";
+
+                const excStr = document.getElementById('prop-exclusions').value;
+                const exclusions = isGlobal ? excStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)) : [];
+
+                // --- [Smart Detector Logic] ---
+                let fontSizePx;
+                if (obj.stampType === 'watermark' || obj.stampType === 'logo_watermark' || obj.stampType === 'logo') {
+                    fontSizePx = (size / 1000) * this.canvas.width;
+                } else {
+                    fontSizePx = size;
+                }
+                
+                let final_x = Math.round(x_pct * 10) / 10;
+                const final_y = Math.round(y_pct * 10) / 10;
+                
+                if (obj.stampType !== 'watermark' && obj.stampType !== 'logo_watermark' && obj.stampType !== 'logo') {
+                    const textLabel = text || this.getStampLabel(obj.stampType);
+                    const estimatedW = textLabel.length * (fontSizePx * 0.7);
+                    const halfW_pct = ((estimatedW / 2) / this.canvas.width) * 100;
+                    
+                    if (final_x - halfW_pct < 5) final_x = 5 + halfW_pct;
+                    if (final_x + halfW_pct > 95) final_x = 95 - halfW_pct;
+                }
+                
+                final_x = Math.round(final_x * 10) / 10;
+
+                obj.set({
+                    left:       (final_x / 100) * this.canvas.width,
+                    top:        (final_y / 100) * this.canvas.height,
+                    opacity:    opacity,
+                    stroke:     color,
+                    angle:      rotate,
+                    scaleX:     1, scaleY: 1,
+                    height:     isLogo ? (fontSizePx * 6) : (fontSizePx * 1.6),
+                    width:      fontSizePx * 6,
+                    targetPage:      isGlobal ? 0 : this.currentPage,
+                    borderColor:     isGlobal ? '#3b82f6' : '#10b981',
+                    borderDashArray: isGlobal ? [5, 5] : null
+                });
+
+                const underContent = document.getElementById('prop-under-content').checked;
+
+                obj.customText    = text;
+                obj.excludedPages = exclusions;
+                obj.pattern       = pattern;
+                obj.underContent  = underContent;
+
+                // تحديث الموديل مباشرة للحفظ الصحيح
+                const m = this.objects.find(o => o.id === obj.id);
+                if (m) {
+                    m.x_pct       = final_x;
+                    m.y_pct       = final_y;
+                    m.font_size   = size;
+                    m.color       = color;
+                    m.custom_text = text;
+                    m.opacity     = opacity;
+                    m.rotation    = rotate;
+                    m.page        = isGlobal ? 0 : this.currentPage;
+                    m.excluded_pages = exclusions;
+                    m.pattern     = pattern;
+                    m.z_index_mode = underContent ? 'background' : 'foreground';
+                }
+
+                // Show/Hide exclusions UI
+                const excArea = document.getElementById('exclusions-area');
+                if (isGlobal) excArea.classList.remove('hidden');
+                else excArea.classList.add('hidden');
+
+                this.canvas.renderAll();
+                this.updateStampLabels();
+            }
+
+            deleteSelected() {
+                const obj = this.canvas.getActiveObject();
+                if (obj) {
+                    if (obj.id) {
+                        this.objects = this.objects.filter(o => o.id !== obj.id);
+                    }
+                    this.canvas.remove(obj);
+                    this.canvas.discardActiveObject();
+                    this.canvas.renderAll();
+                    this.updateStampLabels();
+                }
+            }
+
+            async save() {
+                // Sync current page state to model first!
+                this.syncCanvasToModel();
+
+                if (this.objects.length === 0) {
+                    return showToast("يرجى إضافة ختم واحد على الأقل", "warning");
+                }
+
+                const finalElements = this.objects.map(obj => ({
+                    type: obj.type,
+                    page: parseInt(obj.page),
+                    x_pct: parseFloat(obj.x_pct),
+                    y_pct: parseFloat(obj.y_pct),
+                    font_size: parseInt(obj.font_size),
+                    color: obj.color,
+                    opacity: parseFloat(obj.opacity),
+                    rotation: parseFloat(obj.rotation),
+                    custom_text: obj.custom_text || null,
+                    excluded_pages: (obj.excluded_pages || []).map(p => parseInt(p)),
+                    pattern: obj.pattern || "single"
+                }));
+
+                try {
+                    // Note: Backend now handles "Upsert" logic in crud.py
+                    await layoutsAPI.create({
+                        material_id: parseInt(this.materialId),
+                        layout_type: this.layoutType,
+                        stamp_elements: finalElements
+                    });
+                    showToast("تم حفظ التنسيق بنجاح", "success");
+                    this.close();
+                } catch (err) {
+                    console.error("Layout Save Error:", err);
+                    let errorMessage = err.message;
+                    
+                    // If 422, attempt to extract detail
+                    if (errorMessage.includes('[') && errorMessage.includes(']')) {
+                        try {
+                            const details = JSON.parse(errorMessage.match(/\[.*\]/)[0]);
+                            errorMessage = details.map(d => `${d.loc[d.loc.length-1]}: ${d.msg}`).join(' | ');
+                        } catch(e) {}
+                    }
+                    
+                    showToast("فشل الحفظ: " + errorMessage, "error");
+                }
+            }
+
+            async downloadTest() {
+                this.syncCanvasToModel();
+                if (this.objects.length === 0) {
+                    return showToast("يرجى إضافة ختم واحد على الأقل", "warning");
+                }
+
+                const stampElements = this.objects.map(obj => ({
+                    type: obj.type,
+                    page: parseInt(obj.page),
+                    x_pct: parseFloat(obj.x_pct),
+                    y_pct: parseFloat(obj.y_pct),
+                    font_size: parseInt(obj.font_size),
+                    color: obj.color,
+                    opacity: parseFloat(obj.opacity),
+                    rotation: parseFloat(obj.rotation),
+                    custom_text: obj.custom_text || null,
+                    excluded_pages: (obj.excluded_pages || []).map(p => parseInt(p)),
+                    pattern: obj.pattern || "single"
+                }));
+
+                try {
+                    showToast("⏳ جاري بدء عملية التجهيز...", "info", 4000);
+                    const result = await jobsAPI.startTestDownload(this.materialId, stampElements);
+
+                    // حفظ الـ job في localStorage وإغلاق الـ designer
+                    const pendingJobs = JSON.parse(localStorage.getItem('pending_jobs') || '[]');
+                    pendingJobs.push({ jobId: result.job_id, label: result.label, startedAt: Date.now() });
+                    localStorage.setItem('pending_jobs', JSON.stringify(pendingJobs));
+
+                    // إغلاق الـ designer والعودة للصفحة الرئيسية
+                    this.close();
+                    showToast("✅ بدأت العملية! راجع البانر أسفل الصفحة للتحميل", "success", 5000);
+                    checkPendingJobs();
+
+                } catch (err) {
+                    showToast("خطأ في بدء التحميل: " + err.message, "error");
+                }
+            }
+
+            close() {
+                document.getElementById('layout-modal').classList.remove('show');
+                if (this.canvas) this.canvas.clear();
+            }
+
+            prevPage() { if (this.currentPage > 1) this.renderPage(this.currentPage - 1); }
+            nextPage() { if (this.currentPage < this.totalPages) this.renderPage(this.currentPage + 1); }
+            zoomIn() { 
+                this.scale += 0.1; 
+                this.renderPage(this.currentPage); 
+                const z = `${Math.round(this.scale * 100)}%`;
+                document.getElementById('zoom-level').textContent = z;
+            }
+            zoomOut() { 
+                if (this.scale > 0.5) { 
+                    this.scale -= 0.1; 
+                    this.renderPage(this.currentPage); 
+                    const z = `${Math.round(this.scale * 100)}%`;
+                    document.getElementById('zoom-level').textContent = z;
+                } 
+            }
+
+            // ================= PRESETS LOGIC =================
+            openSavePresetModal() {
+                if (this.objects.length === 0) return showToast("أضف أختاماً أولاً لحفظها كقالب", "warning");
+                document.getElementById('preset-modal-title').textContent = "حفظ كقالب جديد";
+                document.getElementById('preset-save-ui').classList.remove('hidden');
+                document.getElementById('preset-load-ui').classList.add('hidden');
+                document.getElementById('preset-modal').classList.add('show');
+            }
+
+            async savePreset() {
+                const name = document.getElementById('preset-name').value.trim();
+                if (!name) return showToast("يرجى إدخال اسم للقالب", "warning");
+
+                this.syncCanvasToModel();
+                const elements = this.objects.map(obj => ({
+                    type: obj.type,
+                    page: obj.page,
+                    x_pct: obj.x_pct,
+                    y_pct: obj.y_pct,
+                    font_size: obj.font_size,
+                    color: obj.color,
+                    opacity: obj.opacity,
+                    rotation: obj.rotation,
+                    custom_text: obj.custom_text,
+                    excluded_pages: obj.excluded_pages,
+                    pattern: obj.pattern || "single"
+                }));
+
+                try {
+                    await presetsAPI.create({ name, stamp_elements: elements });
+                    showToast("تم حفظ القالب بنجاح", "success");
+                    closeModal('preset-modal');
+                } catch (err) { showToast(err.message, "error"); }
+            }
+
+            async openLoadPresetModal() {
+                document.getElementById('preset-modal-title').textContent = "تحميل قالب جاهز";
+                document.getElementById('preset-save-ui').classList.add('hidden');
+                document.getElementById('preset-load-ui').classList.remove('hidden');
+                document.getElementById('preset-modal').classList.add('show');
+                
+                const list = document.getElementById('preset-list');
+                list.innerHTML = '<div class="spinner" style="margin:20px auto"></div>';
+
+                try {
+                    const presets = await presetsAPI.list();
+                    if (presets.length === 0) {
+                        list.innerHTML = '<p class="text-center p-3 text-muted">لا توجد قوالب محفوظة</p>';
+                        return;
+                    }
+                    list.innerHTML = presets.map(p => `
+                        <div class="flex-between p-2 mb-1" style="background:#0f172a; border-radius:6px; border:1px solid #334155">
+                            <span style="font-weight:600">${p.name}</span>
+                            <div class="flex gap-1">
+                                <button class="btn btn-sm btn-primary" onclick="designer.loadPreset(${p.id})">تطبيق</button>
+                                <button class="btn btn-sm btn-ghost text-danger" onclick="designer.deletePreset(${p.id})">🗑️</button>
+                            </div>
+                        </div>
+                    `).join('');
+                } catch (err) { list.innerHTML = `<p class="text-danger p-3">${err.message}</p>`; }
+            }
+
+            async loadPreset(id) {
+                try {
+                    const presets = await presetsAPI.list();
+                    const p = presets.find(x => x.id === id);
+                    if (!p) return;
+
+                    if (confirm(`هل تريد تطبيق القالب "${p.name}"؟ سيتم مسح الأختام الحالية.`)) {
+                        this.objects = p.stamp_elements.map(el => ({
+                            ...el,
+                            id: Math.random().toString(36).substr(2, 9)
+                        }));
+                        await this.renderPage(this.currentPage);
+                        showToast("تم تطبيق القالب بنجاح", "success");
+                        closeModal('preset-modal');
+                    }
+                } catch (err) { showToast(err.message, "error"); }
+            }
+
+            async deletePreset(id) {
+                if (!confirm("هل أنت متأكد من حذف هذا القالب؟")) return;
+                try {
+                    await presetsAPI.delete(id);
+                    showToast("تم حذف القالب", "info");
+                    this.openLoadPresetModal(); // Refresh list
+                } catch (err) { showToast(err.message, "error"); }
+            }
+        }
+
+        // Initialize Global Designer Instance
+        window.designer = new StampDesigner();
+        
+        let currentMaterialIdForLayout = null;
+        window.openDesigner = (id) => {
+            currentMaterialIdForLayout = id;
+            document.getElementById('choose-layout-modal').style.display = 'flex';
+        };
+
+        window.selectLayoutAndOpen = (layoutType) => {
+            document.getElementById('choose-layout-modal').style.display = 'none';
+            designer.init(currentMaterialIdForLayout, layoutType);
+        };
+
+        // ===== Leak Tracking Logic =====
+        let trackedUserId = null;
+        window.handleTrackLeak = async () => {
+            const code = document.getElementById("tracking-input").value.trim();
+            if (!code) return showToast("يرجى إدخال كود العلامة المخفية", "warning");
+
+            const btn = document.getElementById("track-btn");
+            const loader = document.getElementById("tracking-loader");
+            const results = document.getElementById("leak-results");
+
+            btn.disabled = true;
+            loader.classList.remove("hidden");
+            results.classList.add("hidden");
+
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/layouts/leaks/track?mark_code=${encodeURIComponent(code)}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.detail || "لم يتم العثور على تطابق");
+
+                userHistoryData = data.user_history;
+                trackedUserId = data.user_details.id;
+
+                // User details
+                document.getElementById("res-user-id").textContent = data.user_details.id;
+                document.getElementById("res-user-name").textContent = data.user_details.name;
+                document.getElementById("res-user-email").textContent = data.user_details.email;
+                
+                // Update Ban Button Status
+                const banBtn = document.getElementById("ban-btn-leak");
+                if (data.user_details.is_active === false) {
+                    banBtn.innerHTML = "✅ هذا المستخدم محظور بالفعل";
+                    banBtn.className = "btn btn-sm btn-success btn-full mt-2";
+                    banBtn.onclick = () => toggleUserBan(trackedUserId, true);
+                } else {
+                    banBtn.innerHTML = "🚫 حظر هذا المستخدم فوراً";
+                    banBtn.className = "btn btn-sm btn-danger btn-full mt-2";
+                    banBtn.onclick = handleBanUserFromLeak;
+                }
+                
+                // Leak details
+                document.getElementById("res-purchase-id").textContent = data.leak_details.purchase_id;
+                document.getElementById("res-mat-name").textContent = data.leak_details.material_name;
+                document.getElementById("res-date").textContent = new Date(data.leak_details.purchased_at).toLocaleString("ar-EG");
+                document.getElementById("res-stamp-name").textContent = data.leak_details.stamp_name;
+                document.getElementById("res-stamp-phone").textContent = data.leak_details.stamp_phone;
+                
+                // History
+                document.getElementById("res-history-count").textContent = data.user_history.length;
+                const historyHtml = data.user_history.map(h => `
+                    <div onclick="showPurchaseDetails(${h.id})" style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid var(--border); cursor:pointer; transition:0.2s; border-radius:6px; margin-bottom:4px;" class="history-row">
+                        <div style="flex:1">
+                            <div style="font-weight:600">${h.material_name}</div>
+                            <div style="font-size:11px; opacity:0.6">${new Date(h.purchased_at).toLocaleDateString('ar-EG')}</div>
+                        </div>
+                        <div style="color:var(--primary); font-size:12px; align-self:center">بيانات الختم ←</div>
+                    </div>
+                `).join("");
+                document.getElementById("res-history-list").innerHTML = historyHtml || '<div class="text-muted p-2">لا يوجد مشتريات أخرى</div>';
+
+                results.classList.remove("hidden");
+            } catch (err) {
+                showToast(err.message, "error");
+            } finally {
+                btn.disabled = false;
+                loader.classList.add("hidden");
+            }
+        };
+
+        window.handleBanUserFromLeak = () => {
+            if (!trackedUserId) return;
+            toggleUserBan(trackedUserId, true);
+        };
+
+        window.toggleUserBan = async (userId, fromLeak = false) => {
+            if (!confirm("هل أنت متأكد من تغيير حالة هذا الحساب؟")) return;
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/coins/admin/users/${userId}/toggle-ban`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "فشل تغيير الحالة");
+
+                showToast(data.is_active ? "تم إلغاء الحظر" : "تم حظر المستخدم بنجاح", "success");
+                
+                if (fromLeak) handleTrackLeak(); // Refresh leak view
+                loadUsers(); // Refresh users table
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        window.promoteToAdmin = async (userId) => {
+            if (!confirm("هل أنت متأكد من ترقية هذا المستخدم إلى مدير؟ لا يمكن التراجع عن هذه الخطوة إلا من قاعدة البيانات.")) return;
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/coins/admin/users/${userId}/make-admin`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "فشل الترقية");
+
+                showToast("تم ترقية المستخدم إلى مدير بنجاح", "success");
+                loadUsers();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        window.showPurchaseDetails = (id) => {
+            const p = userHistoryData.find(x => x.id === id);
+            if (!p) return;
+
+            const itemBg = "#1e293b"; // لون صلب غير شفاف
+            const content = `
+                <div style="display:grid; gap:12px;">
+                    <div style="padding:12px; background:${itemBg}; border-radius:10px; border:1px solid var(--border);">
+                        <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;">الملف</label>
+                        <div style="font-weight:700; font-size:15px;">${p.material_name}</div>
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                        <div style="padding:12px; background:${itemBg}; border-radius:10px; border:1px solid var(--border);">
+                            <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;">الاسم المختوم</label>
+                            <div style="font-weight:700; color:var(--primary); font-size:14px;">${p.buyer_name_stamp || '—'}</div>
+                        </div>
+                        <div style="padding:12px; background:${itemBg}; border-radius:10px; border:1px solid var(--border);">
+                            <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;">الهاتف المختوم</label>
+                            <div style="font-weight:700; color:var(--primary); font-size:14px;">${p.buyer_phone_stamp || '—'}</div>
+                        </div>
+                    </div>
+                    <div style="padding:12px; background:${itemBg}; border-radius:10px; border:1px solid var(--border);">
+                        <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;">العلامة المائية المخصصة</label>
+                        <div style="font-weight:700;">${p.watermark_text || 'لا يوجد'}</div>
+                    </div>
+                    <div style="padding:12px; background:${itemBg}; border-radius:10px; border:1px solid var(--border);">
+                        <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;">اسم المذكرة المخصص</label>
+                        <div style="font-weight:700;">${p.doc_name_stamp || 'لا يوجد'}</div>
+                    </div>
+                    <div style="padding:12px; background:${itemBg}; border-radius:10px; border:1px solid var(--border);">
+                        <label style="display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;">تاريخ الشراء</label>
+                        <div style="font-weight:700;">${new Date(p.purchased_at).toLocaleString('ar-EG')}</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById("pd-modal-content").innerHTML = content;
+            openModal('purchase-details-modal');
+        };
+
+        // ===== Background Jobs Banner Logic =====
+        let _jobPollingIntervals = {};
+
+        function checkPendingJobs() {
+            const pending = JSON.parse(localStorage.getItem('pending_jobs') || '[]');
+            // حذف الوظائف القديمة أكثر من ساعة
+            const fresh = pending.filter(j => Date.now() - j.startedAt < 3600000);
+            if (fresh.length !== pending.length) localStorage.setItem('pending_jobs', JSON.stringify(fresh));
+
+            // تحديث البانر
+            updateJobsBanner(fresh);
+
+            // بدء polling لكل وظيفة pending
+            fresh.forEach(job => {
+                if (!_jobPollingIntervals[job.jobId]) {
+                    _jobPollingIntervals[job.jobId] = setInterval(() => pollJob(job.jobId), 3000);
+                }
+            });
+        }
+
+        async function pollJob(jobId) {
+            try {
+                const status = await jobsAPI.status(jobId);
+
+                if (status.status === 'done') {
+                    clearInterval(_jobPollingIntervals[jobId]);
+                    delete _jobPollingIntervals[jobId];
+
+                    // تحديث القائمة في localStorage
+                    let pending = JSON.parse(localStorage.getItem('pending_jobs') || '[]');
+                    pending = pending.map(j => j.jobId === jobId ? { ...j, done: true, downloadUrl: jobsAPI.downloadUrl(jobId) } : j);
+                    localStorage.setItem('pending_jobs', JSON.stringify(pending));
+                    updateJobsBanner(pending);
+
+                } else if (status.status === 'error') {
+                    clearInterval(_jobPollingIntervals[jobId]);
+                    delete _jobPollingIntervals[jobId];
+
+                    let pending = JSON.parse(localStorage.getItem('pending_jobs') || '[]');
+                    pending = pending.map(j => j.jobId === jobId ? { ...j, error: true, errorMsg: status.error } : j);
+                    localStorage.setItem('pending_jobs', JSON.stringify(pending));
+                    updateJobsBanner(pending);
+                }
+            } catch (e) {
+                // السيرفر مش جاهز بعد، نكمل polling
+            }
+        }
+
+        function updateJobsBanner(jobs) {
+            let banner = document.getElementById('jobs-banner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'jobs-banner';
+                banner.style.cssText = `
+                    position: fixed; bottom: 0; left: 0; right: 0;
+                    z-index: 99998;
+                    padding: 0 16px 12px;
+                    display: flex; flex-direction: column; gap: 8px;
+                    pointer-events: none;
+                `;
+                document.body.appendChild(banner);
+            }
+
+            if (!jobs || jobs.length === 0) {
+                banner.innerHTML = '';
+                return;
+            }
+
+            banner.innerHTML = jobs.map(job => {
+                if (job.done) {
+                    return `
+                        <div style="
+                            background: #064e3b; border: 1px solid #059669; border-radius: 10px;
+                            padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+                            color: white; font-size: 14px; pointer-events: all;
+                            box-shadow: 0 4px 16px rgba(0,0,0,0.3); max-width: 480px; margin: 0 auto;
+                        ">
+                            <span style="font-size:20px;">✅</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:700; margin-bottom:3px;">${job.label}</div>
+                                <div style="font-size:12px; color:#6ee7b7;">جاهز للتحميل</div>
+                            </div>
+                            <a href="${job.downloadUrl}" 
+                               style="background:#059669; color:white; padding:8px 16px; border-radius:6px; font-weight:700; text-decoration:none;"
+                               onclick="dismissJob('${job.jobId}')">
+                                📥 تحميل
+                            </a>
+                            <button onclick="dismissJob('${job.jobId}')" 
+                                style="background:transparent; border:none; color:#6ee7b7; font-size:18px; cursor:pointer;">✕</button>
+                        </div>`;
+                } else if (job.error) {
+                    return `
+                        <div style="
+                            background: #450a0a; border: 1px solid #dc2626; border-radius: 10px;
+                            padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+                            color: white; font-size: 14px; pointer-events: all;
+                            box-shadow: 0 4px 16px rgba(0,0,0,0.3); max-width: 480px; margin: 0 auto;
+                        ">
+                            <span style="font-size:20px;">❌</span>
+                            <div style="flex:1;">
+                                <div style="font-weight:700; margin-bottom:3px;">${job.label}</div>
+                                <div style="font-size:12px; color:#fca5a5;">${job.errorMsg || 'حدث خطأ في التوليد'}</div>
+                            </div>
+                            <button onclick="dismissJob('${job.jobId}')" 
+                                style="background:transparent; border:none; color:#fca5a5; font-size:18px; cursor:pointer;">✕</button>
+                        </div>`;
+                } else {
+                    // جاري المعالجة
+                    return `
+                        <div style="
+                            background: #1e3a5f; border: 1px solid #1a56db; border-radius: 10px;
+                            padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+                            color: white; font-size: 14px; pointer-events: all;
+                            box-shadow: 0 4px 16px rgba(0,0,0,0.3); max-width: 480px; margin: 0 auto;
+                        ">
+                            <div class="spinner" style="width:20px;height:20px;border-width:2px;border-top-color:#60a5fa;flex-shrink:0;"></div>
+                            <div style="flex:1;">
+                                <div style="font-weight:700; margin-bottom:3px;">${job.label}</div>
+                                <div style="font-size:12px; color:#93c5fd;">جاري التجهيز... سيظهر رابط التحميل تلقائياً</div>
+                            </div>
+                            <button onclick="dismissJob('${job.jobId}')" 
+                                style="background:transparent; border:none; color:#93c5fd; font-size:18px; cursor:pointer;">✕</button>
+                        </div>`;
+                }
+            }).join('');
+        }
+
+        window.dismissJob = (jobId) => {
+            clearInterval(_jobPollingIntervals[jobId]);
+            delete _jobPollingIntervals[jobId];
+            let pending = JSON.parse(localStorage.getItem('pending_jobs') || '[]');
+            pending = pending.filter(j => j.jobId !== jobId);
+            localStorage.setItem('pending_jobs', JSON.stringify(pending));
+            updateJobsBanner(pending);
+        };
+
+        window.handleLogout = () => {
+            if (confirm("هل تريد تسجيل الخروج؟")) authAPI.logout();
+        };
+
+        // ===== Admin Tools Logic =====
+        window.downloadDatabase = async () => {
+            const token = localStorage.getItem("access_token");
+            try {
+                showToast("⏳ جاري تحضير قاعدة البيانات...", "info");
+                const response = await fetch(`${BASE_URL}/admin-tools/download-db`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+
+                if (!response.ok) throw new Error("فشل تحميل قاعدة البيانات");
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup_db_${new Date().toISOString().slice(0, 10)}.db`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showToast("✅ تم التحميل بنجاح", "success");
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        window.sendAdminNotification = async () => {
+            const target = document.getElementById('notif-target').value.trim();
+            const title = document.getElementById('notif-title').value.trim();
+            const message = document.getElementById('notif-message').value.trim();
+
+            if (!title || !message) return showToast("يرجى ملء العنوان والرسالة", "warning");
+
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/admin-tools/broadcast`, {
+                    method: "POST",
+                    headers: { 
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        user_id: target ? parseInt(target) : null,
+                        title,
+                        message
+                    })
+                });
+
+                if (!res.ok) throw new Error("فشل إرسال الإشعار");
+
+                showToast("🚀 تم إرسال الإشعار بنجاح", "success");
+                document.getElementById('notif-target').value = '';
+                document.getElementById('notif-title').value = '';
+                document.getElementById('notif-message').value = '';
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        async function loadSystemStats() {
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/admin-tools/system-info`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                document.getElementById('system-stats-content').innerHTML = `
+                    <div class="grid-2 gap-1" style="font-size:14px;">
+                        <div><strong>نظام التشغيل:</strong> ${data.os}</div>
+                        <div><strong>المسار الرئيسي:</strong> ${data.base_dir}</div>
+                        <div><strong>رابط القاعدة (URL):</strong> ${data.database_url}</div>
+                        <div><strong>المسار المحسوب للملف:</strong> ${data.resolved_db_path}</div>
+                        <div><strong>هل الملف موجود؟:</strong> ${data.db_exists ? '<span class="text-success">نعم ✅</span>' : '<span class="text-danger">لا ❌</span>'}</div>
+                        <div><strong>قاعدة البيانات:</strong> ${data.database_type}</div>
+                        <div><strong>حالة السيرفر:</strong> <span class="text-success">متصل ✅</span></div>
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById('system-stats-content').innerHTML = `<p class="text-danger">فشل جلب المعلومات: ${err.message}</p>`;
+            }
+        }
+
+        window.toggleSidebar = () => {
+            const sidebar = document.getElementById("sidebar");
+            const overlay = document.getElementById("sidebar-overlay");
+            if (!sidebar) return;
+            const isShowing = sidebar.classList.toggle("show");
+            if (overlay) {
+                if (isShowing) overlay.classList.remove("hidden");
+                else overlay.classList.add("hidden");
+            }
+        };
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 900) {
+                const sidebar = document.getElementById("sidebar");
+                const menuBtn = document.querySelector(".mobile-menu-btn");
+                const overlay = document.getElementById("sidebar-overlay");
+                if (sidebar && !sidebar.contains(e.target) && (!menuBtn || !menuBtn.contains(e.target)) && sidebar.classList.contains("show")) {
+                    sidebar.classList.remove("show");
+                    if (overlay) overlay.classList.add("hidden");
+                }
+            }
+        });
+
+        // ── Device Management Handlers ──
+        let currentManagingUserId = null;
+
+        window.showUserDevices = async (userId) => {
+            currentManagingUserId = userId;
+            const tbody = document.getElementById("devices-tbody");
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner" style="margin:10px auto"></div></td></tr>';
+            openModal("devices-modal");
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/users/admin/${userId}/devices`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("فشل جلب أجهزة المستخدم");
+                const devices = await res.json();
+                if (!devices || devices.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted" style="padding: 20px;">لا توجد أجهزة مسجلة لهذا الطالب</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = devices.map(d => `
+                    <tr>
+                        <td style="font-size: 11px; font-family: monospace;">${d.device_id ? d.device_id.slice(0, 16) + '...' : 'غير معروف'}</td>
+                        <td>${d.browser || 'غير محدد'}</td>
+                        <td style="font-family: monospace;">${d.ip_address || '—'}</td>
+                        <td>
+                            <span class="badge ${d.is_blocked ? 'badge-danger' : 'badge-success'}">
+                                ${d.is_blocked ? 'محظور' : 'نشط'}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm ${d.is_blocked ? 'btn-success' : 'btn-danger'}" onclick="handleToggleDeviceBlock(${d.id})">
+                                ${d.is_blocked ? 'إلغاء الحظر' : 'حظر الجهاز'}
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">${err.message}</td></tr>`;
+                showToast(err.message, "error");
+            }
+        };
+
+        window.handleResetAllDevices = async () => {
+            if (!currentManagingUserId) return;
+            if (!confirm("هل أنت متأكد من إعادة تعيين جميع أجهزة هذا الطالب؟ سيسمح له ذلك بالدخول من أجهزة جديدة.")) return;
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/users/admin/${currentManagingUserId}/devices`, {
+                    method: "DELETE",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "فشل إعادة تعيين الأجهزة");
+                showToast(data.message || "تمت إعادة تعيين الأجهزة بنجاح", "success");
+                showUserDevices(currentManagingUserId);
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        window.handleToggleDeviceBlock = async (recordId) => {
+            try {
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/users/admin/devices/${recordId}/toggle-block`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "فشل تحديث حالة الجهاز");
+                showToast(data.message || "تم تحديث حالة الجهاز", "success");
+                if (currentManagingUserId) showUserDevices(currentManagingUserId);
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        // ── Database & Materials Restoration Handlers ──
+        window.handleRestoreDB = async () => {
+            const input = document.getElementById("db-upload");
+            if (!input.files || input.files.length === 0) {
+                return showToast("يرجى اختيار ملف قاعدة بيانات (.db)", "warning");
+            }
+            if (!confirm("تحذير أمني شديد: سيتم استبدال قاعدة البيانات الحالية بالكامل بالملف المرفوع! هل أنت متأكد؟")) {
+                return;
+            }
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+            try {
+                showToast("جاري استعادة قاعدة البيانات...", "info");
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/admin-tools/restore-db`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` },
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "فشل استعادة قاعدة البيانات");
+                showToast(data.message || "تمت استعادة قاعدة البيانات بنجاح", "success");
+                input.value = "";
+                setTimeout(() => location.reload(), 1500);
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+
+        window.handleRestoreMaterials = async () => {
+            const input = document.getElementById("materials-upload");
+            if (!input.files || input.files.length === 0) {
+                return showToast("يرجى اختيار ملف ZIP يحتوي على المذكرات", "warning");
+            }
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append("file", file);
+            try {
+                showToast("جاري رفع واستخراج المذكرات...", "info");
+                const token = localStorage.getItem("access_token");
+                const res = await fetch(`${BASE_URL}/admin-tools/restore-materials`, {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${token}` },
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || "فشل استيراد المذكرات");
+                showToast(data.message || "تم استيراد المذكرات بنجاح", "success");
+                input.value = "";
+                loadMaterials();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        };
+    </script>
+</body>
+
+</html>
