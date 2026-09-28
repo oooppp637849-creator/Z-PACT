@@ -44,17 +44,18 @@ engine = create_engine(
 )
 
 # تفعيل إعدادات الأداء الأقصى (WAL Mode + Memory Cache + MMAP) لتحمل 100,000 مستخدم
-from sqlalchemy import event
-@event.listens_for(engine, "connect")
-def set_sqlite_pragma(dbapi_connection, connection_record):
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA synchronous=NORMAL")
-    cursor.execute("PRAGMA busy_timeout=60000") # 60 ثانية انتظار لتفادي الـ Lock
-    cursor.execute("PRAGMA cache_size=-64000") # كاش 64 ميجابايت في الرام لكل اتصال
-    cursor.execute("PRAGMA temp_store=MEMORY") # حفظ الجداول والفهارس المؤقتة بالكامل في الرام
-    cursor.execute("PRAGMA mmap_size=2147483648") # 2 جيجابايت Memory-Mapped I/O لسرعة قراءة فورية من الرام
-    cursor.close()
+if "sqlite" in DATABASE_URL:
+    from sqlalchemy import event
+    @event.listens_for(engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.execute("PRAGMA busy_timeout=60000") # 60 ثانية انتظار لتفادي الـ Lock
+        cursor.execute("PRAGMA cache_size=-64000") # كاش 64 ميجابايت في الرام لكل اتصال
+        cursor.execute("PRAGMA temp_store=MEMORY") # حفظ الجداول والفهارس المؤقتة بالكامل في الرام
+        cursor.execute("PRAGMA mmap_size=2147483648") # 2 جيجابايت Memory-Mapped I/O لسرعة قراءة فورية من الرام
+        cursor.close()
 
 # -----------------------------------------------------------
 # SessionLocal — Factory لإنشاء جلسات قاعدة البيانات

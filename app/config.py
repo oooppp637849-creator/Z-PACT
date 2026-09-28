@@ -46,6 +46,8 @@ class Settings:
     def DATABASE_URL(self) -> str:
         env_url = os.getenv("DATABASE_URL")
         if env_url:
+            if env_url.startswith("postgres://"):
+                env_url = env_url.replace("postgres://", "postgresql://", 1)
             return env_url
         if self.ENVIRONMENT == "production":
             return "sqlite:////.data/webpdf_elite.db"
